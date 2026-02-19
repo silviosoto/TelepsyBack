@@ -1,0 +1,9 @@
+Next Steps / Future Enhancements
+✅ Zoom Integration: Implemented with ZoomNet library and Server-to-Server OAuth
+✅ Document Upload: Implemented file storage for psychologist CV and Photo (Local/Azure)
+login con azure front y back para el paciente y con susuari y contraseña
+Email Notifications: Send invoice PDFs via email
+Frontend PDF Generation: Create invoice templates
+Payment Gateway: Integrate with Stripe/PayU for real payments
+Audit Dashboard: Admin UI to view all audit logs
+Invoice Numbering: Implement legally compliant sequential numbering (DIAN resolution for Colombia)

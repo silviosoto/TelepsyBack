@@ -1,0 +1,11 @@
+using System;
+using System.Threading.Tasks;
+
+namespace TelePsy.DAL.Repositories
+{
+    public interface IUnitOfWork : IDisposable
+    {
+        IGenericRepository<T> Repository<T>() where T : class;
+        Task<int> CompleteAsync();
+    }
+}

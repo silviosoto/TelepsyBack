@@ -1,0 +1,110 @@
+PROMPT OPTIMIZADO PARA DESARROLLAR EL LANDING DE MINDCARE
+
+usa los skills que estna en el proyecto para hacerlo 
+
+Actúa como un Senior Product Designer + Growth Marketer + Frontend
+Architect especializado en plataformas HealthTech.
+
+Necesito que diseñes y desarrolles el frontend del landing page para la
+plataforma de telepsicología:
+
+Nombre: Mindcare Mercado: Colombia Público objetivo: Profesionales entre
+25 y 40 años Tono de marca: Cercano y humano, pero profesional y clínico
+
+Propuesta de valor principal: “Te conectamos con el psicólogo ideal para
+ti en minutos, desde cualquier lugar.”
+
+El diseño debe inspirarse en: - Estilo visual similar a BetterHelp
+(moderno, limpio, confianza, emocional) - Referencia de tipografía y
+composición basada en:
+https://www.behance.net/gallery/205976735/Healthcare-Medical-Landing-Page-UIUX-Design
+
+No copiar el diseño, solo usarlo como inspiración en jerarquía
+tipográfica, espaciamiento y estructura.
+
+OBJETIVO PRINCIPAL DEL LANDING
+
+El objetivo principal es que el usuario realice el Test de Matching como
+primera acción.
+
+CTA principal: “Iniciar test y encontrar mi psicólogo”
+
+El landing debe estar construido bajo la estructura AIDA: Attention
+Interest Desire Action
+
+ESTRUCTURA REQUERIDA
+
+1.  Hero Section (Attention)
+
+-   Headline fuerte con propuesta de valor
+-   Subheadline que refuerce accesibilidad desde cualquier dispositivo
+-   CTA principal claro
+-   CTA secundario opcional (Ver cómo funciona)
+-   Mockup visual mostrando uso en móvil, tablet y desktop
+-   Sensación emocional de calma y confianza
+
+2.  Problema y Empatía (Interest) Mostrar:
+
+-   Estrés laboral
+-   Ansiedad
+-   Falta de tiempo
+-   Dificultad para encontrar un psicólogo adecuado
+-   Agendas complicadas
+
+3.  Solución Mindcare (Interest → Desire) Paso 1: Realiza el test de
+    matching inteligente Paso 2: Te conectamos con el psicólogo ideal
+    según tu perfil Paso 3: Agenda tu sesión online desde cualquier
+    dispositivo
+
+Destacar: - Matching por intereses y estilo de vida - Psicólogos
+verificados - Disponible en móvil, tablet y desktop - Compra de paquetes
+con 10% descuento
+
+4.  Diferenciales Competitivos (Desire)
+
+-   Matching inteligente personalizado
+-   Psicólogos con experiencia
+-   Compra paquetes con descuento
+-   Acceso desde cualquier lugar
+-   Atención profesional y confidencial
+
+5.  Prueba Social (Desire)
+
+-   Testimonios reales (mínimo 3)
+-   Número de pacientes atendidos Ejemplo: +2.500 profesionales ya han
+    iniciado su proceso con nosotros
+
+6.  Sección del Test (Pre-CTA) “Inicia tu test en menos de 60 segundos.”
+
+-   Indicador de tiempo estimado
+-   CTA dominante visualmente
+
+7.  CTA Final (Action) “Tu bienestar mental no puede esperar.” Botón
+    grande: “Comenzar mi test ahora”
+
+8.  FAQ
+
+-   ¿Cómo funciona el test?
+-   ¿Puedo comprar varias sesiones?
+-   ¿Puedo conectarme desde mi celular?
+-   ¿Los psicólogos están verificados?
+-   ¿Mis datos son confidenciales?
+
+REQUISITOS TÉCNICOS
+
+Desarrollar en: - Next.js 14+ - App Router - TypeScript - TailwindCSS -
+Arquitectura modular por componentes - Diseño responsive
+(mobile-first) - Optimizado para SEO - Lighthouse > 90
+
+Incluir: - Metadata optimizada para Colombia - OpenGraph - HTML5
+semántico - Accesibilidad básica (ARIA cuando sea necesario)
+
+ESTRATEGIA DE CONVERSIÓN
+
+Aplicar: - Psicología del color (confianza y calma) - Jerarquía visual
+clara - CTA visible sin scroll - Repetición estratégica del CTA -
+Copywriting persuasivo enfocado en profesionales ocupados -
+Microinteracciones sutiles - Diseño limpio sin sobrecarga visual
+
+No generar diseño genérico. No usar plantillas básicas. Debe sentirse
+como una startup real lista para inversión.
