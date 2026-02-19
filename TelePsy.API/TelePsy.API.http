@@ -1,0 +1,6 @@
+@TelePsy.API_HostAddress = http://localhost:5002
+
+GET {{TelePsy.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

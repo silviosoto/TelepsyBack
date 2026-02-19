@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TelePsy.API/TelePsy.API.csproj" />
+  <Project Path="TelePsy.BLL/TelePsy.BLL.csproj" />
+  <Project Path="TelePsy.DAL/TelePsy.DAL.csproj" />
+  <Project Path="TelePsy.Domain/TelePsy.Domain.csproj" />
+</Solution>

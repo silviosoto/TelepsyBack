@@ -1,0 +1,3 @@
+Administrador	admin@telepsy.com	Admin123!
+Psicólogo	psych@telepsy.com	Psych123!
+Paciente	patient@telepsy.com	Patient123!
