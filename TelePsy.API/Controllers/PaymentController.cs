@@ -37,29 +37,43 @@ namespace TelePsy.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Confirmation([FromForm] PayUWebhookRequest request)
         {
-            // PayU sends confirmation via POST with form-data
-            // We need to map it to our internal model
             try
             {
+                Console.WriteLine($"Webhook Received: State={request.state_pol}, Ref={request.reference_sale}, Value={request.value}, Sign={request.sign}");
+
+                if (string.IsNullOrEmpty(request.state_pol))
+                {
+                    Console.WriteLine("state_pol is empty.");
+                    return Ok();
+                }
+
+                int state = int.Parse(request.state_pol);
+                
+                // Allow replacing comma with dot for culture invariant parsing just in case
+                string valueStr = request.value?.Replace(',', '.') ?? "0";
+                decimal amount = decimal.Parse(valueStr, CultureInfo.InvariantCulture);
+
                 var data = new PayUConfirmationData
                 {
                     MerchantId = request.merchant_id,
                     ReferenceCode = request.reference_sale,
-                    Amount = decimal.Parse(request.value, CultureInfo.InvariantCulture),
+                    Amount = amount,
                     Currency = request.currency,
-                    State = int.Parse(request.state_pol),
+                    State = state,
                     Signature = request.sign,
                     TransactionId = request.transaction_id,
                     ResponseMessage = request.response_message_pol
                 };
 
-                await _paymentService.ProcessPaymentConfirmationAsync(data);
+                bool processResult = await _paymentService.ProcessPaymentConfirmationAsync(data);
+                Console.WriteLine($"Process Result: {processResult}");
+                
                 return Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Even if it fails, we usually return 200 to PayU to stop retries if we can't process it,
-                // or return error if we want retries. PayU retries several times.
+                Console.WriteLine($"Webhook processing error: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
                 return Ok(); 
             }
         }
