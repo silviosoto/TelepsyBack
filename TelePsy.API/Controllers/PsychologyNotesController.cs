@@ -72,5 +72,33 @@ namespace TelePsy.API.Controllers
                 return BadRequest(new { message = msg, stack = ex.StackTrace });
             }
         }
+
+        [HttpPut("{noteId}")]
+        public async Task<IActionResult> UpdateNote(int noteId, [FromBody] PsychologyNote note)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var psych = await _psychologistService.GetPsychologistByUserIdAsync(userId);
+                
+                if (psych == null) return Unauthorized(new { message = "Invalid psychologist profile" });
+
+                if (noteId != note.Id) return BadRequest(new { message = "ID mismatch" });
+
+                note.PsychologistId = psych.Id;
+
+                await _noteService.UpdateNoteAsync(note);
+
+                return Ok(new { message = "Note updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message;
+                if (ex.InnerException != null)
+                    msg += " Inner: " + ex.InnerException.Message;
+
+                return BadRequest(new { message = msg, stack = ex.StackTrace });
+            }
+        }
     }
 }
