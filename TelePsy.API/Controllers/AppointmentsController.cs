@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
+using TelePsy.Domain.DTOs;
 using TelePsy.Domain.Entities;
 
 namespace TelePsy.API.Controllers
@@ -18,11 +21,50 @@ namespace TelePsy.API.Controllers
             _appointmentService = appointmentService;
         }
 
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Appointment appointment)
         {
             var result = await _appointmentService.CreateAppointmentAsync(appointment);
             return Ok(result);
+        }
+
+        [HttpPost("initiate")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> Initiate([FromBody] InitiateBookingDto dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var result = await _appointmentService.InitiateBookingAsync(userId, dto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("checkout-summary/{id}")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> GetCheckoutSummary(int id)
+        {
+            try
+            {
+                var result = await _appointmentService.GetCheckoutSummaryAsync(id);
+                if (result == null) return NotFound();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [Authorize(Roles = "Patient")]

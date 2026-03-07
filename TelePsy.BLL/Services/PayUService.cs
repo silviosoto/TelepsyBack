@@ -31,7 +31,7 @@ namespace TelePsy.BLL.Services
             _apiKey = _configuration["PayU:ApiKey"];
             _accountId = _configuration["PayU:AccountId"];
             _checkoutUrl = _configuration["PayU:CheckoutUrl"] ??
-                           "https://sandbox.checkout.payulatam.com/checkout.webapp";
+                           "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/";
             _responseUrl = _configuration["PayU:ResponseUrl"];
             _confirmationUrl = _configuration["PayU:ConfirmationUrl"];
         }
@@ -45,7 +45,10 @@ namespace TelePsy.BLL.Services
 
             if (invoice == null) throw new Exception("Invoice not found");
 
-            string referenceCode = $"INV-{invoice.Id}-{DateTime.UtcNow.Ticks}";
+            var appointmentId = invoice.Details.FirstOrDefault()?.AppointmentId ?? 0;
+            if (appointmentId == 0) throw new Exception("No appointment associated with this invoice.");
+
+            string referenceCode = $"INV-{invoice.Id}-{DateTime.UtcNow.Ticks % 1000000}"; // Shorter but unique enough
             string currency = "COP";
             decimal amount = invoice.TotalAmount;
 
@@ -69,23 +72,45 @@ namespace TelePsy.BLL.Services
                 checkoutUrl = _checkoutUrl
             };
 
-            // Save the pending payment record
-            var payment = new Payment
+            // Check if a payment already exists for this appointment
+            var existingPayment = (await _unitOfWork.Repository<Payment>().GetAsync(p => p.AppointmentId == appointmentId)).FirstOrDefault();
+            
+            Payment paymentToSave;
+            if (existingPayment != null && existingPayment.Status == "Pending")
             {
-                Amount = amount,
-                Date = DateTime.UtcNow,
-                Status = "Pending",
-                TransactionId = referenceCode, // Store reference as TransactionId initially
-                AppointmentId = invoice.Details.FirstOrDefault()?.AppointmentId ?? 0
-            };
+                // Reuse existing payment
+                existingPayment.Amount = amount;
+                existingPayment.TransactionId = referenceCode;
+                existingPayment.Date = DateTime.UtcNow;
+                existingPayment.PatientInvoiceId = invoice.Id;
+                _unitOfWork.Repository<Payment>().Update(existingPayment);
+                paymentToSave = existingPayment;
+            }
+            else
+            {
+                // Create a new pending payment record
+                paymentToSave = new Payment
+                {
+                    Amount = amount,
+                    Date = DateTime.UtcNow,
+                    Status = "Pending",
+                    TransactionId = referenceCode,
+                    AppointmentId = appointmentId,
+                    PatientInvoiceId = invoice.Id
+                };
 
-            await _unitOfWork.Repository<Payment>().AddAsync(payment);
+                await _unitOfWork.Repository<Payment>().AddAsync(paymentToSave);
+            }
+
             await _unitOfWork.CompleteAsync();
 
-            // Link invoice to payment
-            invoice.PaymentId = payment.Id;
-            _unitOfWork.Repository<Invoice>().Update(invoice);
-            await _unitOfWork.CompleteAsync();
+            // Link invoice to payment after saving the payment to ensure we have a valid ID
+            if (invoice.PaymentId != paymentToSave.Id)
+            {
+                invoice.PaymentId = paymentToSave.Id; 
+                _unitOfWork.Repository<Invoice>().Update(invoice);
+                await _unitOfWork.CompleteAsync();
+            }
 
             return System.Text.Json.JsonSerializer.Serialize(requestData);
         }

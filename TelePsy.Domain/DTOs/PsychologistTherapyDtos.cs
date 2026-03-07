@@ -5,7 +5,8 @@ namespace TelePsy.Domain.DTOs
         public int Id { get; set; }
         public int PsychologistId { get; set; }
         public int TherapyId { get; set; }
-        public string TherapyName { get; set; }
+        public string TherapyName { get; set; } = string.Empty;
+        public string TherapyDescription { get; set; } = string.Empty;
         public decimal Rate { get; set; }
         public bool IsActive { get; set; }
     }
@@ -14,5 +15,12 @@ namespace TelePsy.Domain.DTOs
     {
         public int TherapyId { get; set; }
         public decimal Rate { get; set; }
+    }
+
+    public class UpdatePsychologistServiceDto
+    {
+        public int TherapyId { get; set; }
+        public decimal Rate { get; set; }
+        public bool IsActive { get; set; }
     }
 }

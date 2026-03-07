@@ -105,5 +105,136 @@ namespace TelePsy.BLL.Services
             _unitOfWork.Repository<Psychologist>().Update(psychologist);
             await _unitOfWork.CompleteAsync();
         }
+
+        public async Task<IEnumerable<Therapy>> GetAvailableTherapiesAsync()
+        {
+            return await _unitOfWork.Repository<Therapy>().GetAsync(t => t.IsActive);
+        }
+
+        public async Task<IEnumerable<PsychologistTherapyDto>> GetPsychologistServicesAsync(int psychologistId)
+        {
+            var services = await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
+                pt => pt.PsychologistId == psychologistId,
+                includeProperties: "Therapy"
+            );
+
+            return services.Select(s => new PsychologistTherapyDto
+            {
+                Id = s.Id,
+                PsychologistId = s.PsychologistId,
+                TherapyId = s.TherapyId,
+                TherapyName = s.Therapy?.Name ?? string.Empty,
+                TherapyDescription = s.Therapy?.Description ?? string.Empty,
+                Rate = s.Rate,
+                IsActive = s.IsActive
+            });
+        }
+
+        public async Task UpdatePsychologistServiceAsync(int psychologistId, UpdatePsychologistServiceDto dto)
+        {
+            var existing = (await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
+                pt => pt.PsychologistId == psychologistId && pt.TherapyId == dto.TherapyId
+            )).FirstOrDefault();
+
+            if (existing != null)
+            {
+                existing.Rate = dto.Rate;
+                existing.IsActive = dto.IsActive;
+                _unitOfWork.Repository<PsychologistTherapy>().Update(existing);
+            }
+            else
+            {
+                var newService = new PsychologistTherapy
+                {
+                    PsychologistId = psychologistId,
+                    TherapyId = dto.TherapyId,
+                    Rate = dto.Rate,
+                    IsActive = dto.IsActive
+                };
+                await _unitOfWork.Repository<PsychologistTherapy>().AddAsync(newService);
+            }
+
+            await _unitOfWork.CompleteAsync();
+        }
+
+        public async Task<IEnumerable<PatientListItemDto>> GetPatientsByPsychologistAsync(int psychologistId)
+        {
+            var appointments = await _unitOfWork.Repository<Appointment>().GetAsync(
+                a => a.PsychologistId == psychologistId,
+                includeProperties: "Patient,Patient.Person,Patient.Person.User"
+            );
+
+            return appointments
+                .GroupBy(a => a.PatientId)
+                .Select(g => 
+                {
+                    var firstAppt = g.First();
+                    var patient = firstAppt.Patient;
+                    var latestAppt = g.OrderByDescending(a => a.ScheduledTime).First();
+                    
+                    return new PatientListItemDto
+                    {
+                        Id = patient.Id,
+                        FullName = patient.Person != null ? $"{patient.Person.FirstName} {patient.Person.LastName}".Trim() : "Unknown",
+                        Email = patient.Person?.User?.Email,
+                        Phone = patient.Person?.PhoneNumber,
+                        ProfilePicturePath = null,
+                        LastAppointmentDate = latestAppt.ScheduledTime,
+                        SessionCount = g.Count()
+                    };
+                }).ToList();
+        }
+
+        public async Task<IEnumerable<SpecialtyDto>> GetAvailableSpecialtiesAsync()
+        {
+            var therapies = await _unitOfWork.Repository<Therapy>().GetAsync(t => t.IsActive);
+            return therapies.Select(t => new SpecialtyDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description
+            });
+        }
+
+        public async Task<IEnumerable<SpecialtyDto>> GetPsychologistSpecialtiesAsync(int psychologistId)
+        {
+            var therapies = await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
+                pt => pt.PsychologistId == psychologistId && pt.IsActive,
+                includeProperties: "Therapy"
+            );
+
+            return therapies.Select(pt => new SpecialtyDto
+            {
+                Id = pt.TherapyId,
+                Name = pt.Therapy?.Name ?? "Unknown",
+                Description = pt.Therapy?.Description ?? string.Empty
+            });
+        }
+
+        public async Task UpdatePsychologistSpecialtyAsync(int psychologistId, UpdatePsychologistSpecialtyDto dto)
+        {
+            var existing = (await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
+                pt => pt.PsychologistId == psychologistId && pt.TherapyId == dto.SpecialtyId
+            )).FirstOrDefault();
+
+            if (existing != null)
+            {
+                existing.IsActive = dto.IsActive;
+                _unitOfWork.Repository<PsychologistTherapy>().Update(existing);
+            }
+            else if (dto.IsActive)
+            {
+                var newSpecialty = new PsychologistTherapy
+                {
+                    PsychologistId = psychologistId,
+                    TherapyId = dto.SpecialtyId,
+                    IsActive = true,
+                    Rate = 0 // Default rate for specialty-only selection
+                };
+                await _unitOfWork.Repository<PsychologistTherapy>().AddAsync(newSpecialty);
+            }
+
+            await _unitOfWork.CompleteAsync();
+        }
     }
 }

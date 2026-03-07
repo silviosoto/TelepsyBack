@@ -12,6 +12,7 @@ namespace TelePsy.BLL.Interfaces
         Task<IEnumerable<Appointment>> GetAppointmentsForPatientAsync(int patientId);
         Task<IEnumerable<Appointment>> GetAppointmentsForPsychologistAsync(int psychologistId);
         Task CancelAppointmentAsync(int appointmentId);
+        Task<IEnumerable<WorkScheduleDto>> GetWorkScheduleAsync(int psychologistId);
 
         // Schedule Management
         Task SetWorkScheduleAsync(int psychologistId, List<WorkScheduleDto> schedules);
@@ -20,5 +21,9 @@ namespace TelePsy.BLL.Interfaces
             int durationMinutes = 45);
 
         Task BlockSlotAsync(int psychologistId, BlockSlotDto dto);
+
+        // Booking Flow
+        Task<BookingResponseDto> InitiateBookingAsync(string userId, InitiateBookingDto dto);
+        Task<CheckoutSummaryDto> GetCheckoutSummaryAsync(int appointmentId);
     }
 }
