@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
 using TelePsy.DAL.Repositories;
@@ -30,7 +31,7 @@ namespace TelePsy.BLL.Services
                     pt => pt.PsychologistId == appointment.PsychologistId && pt.TherapyId == appointment.TherapyId && pt.IsActive
                 );
 
-                if (therapyConfig != null)
+                if (therapyConfig is not null)
                 {
                     appointment.Rate = therapyConfig.Rate;
                 }
@@ -48,7 +49,7 @@ namespace TelePsy.BLL.Services
                  // But user insisted on Therapy Rate.
                  // Let's check Psychologist.SessionRate as fallback if no Therapy model strictly enforced yet.
                  var psychologist = await _unitOfWork.Repository<Psychologist>().GetByIdAsync(appointment.PsychologistId);
-                 if (psychologist != null)
+                 if (psychologist is not null)
                  {
                      appointment.Rate = psychologist.SessionRate;
                  }
@@ -75,12 +76,23 @@ namespace TelePsy.BLL.Services
         public async Task CancelAppointmentAsync(int appointmentId)
         {
             var appointment = await _unitOfWork.Repository<Appointment>().GetByIdAsync(appointmentId);
-            if (appointment != null)
+            if (appointment is not null)
             {
                 appointment.Status = AppointmentStatus.Cancelled;
                 _unitOfWork.Repository<Appointment>().Update(appointment);
                 await _unitOfWork.CompleteAsync();
             }
+        }
+
+        public async Task<IEnumerable<WorkScheduleDto>> GetWorkScheduleAsync(int psychologistId)
+        {
+            var schedule = await _unitOfWork.Repository<WorkSchedule>().GetAsync(w => w.PsychologistId == psychologistId);
+            return schedule.Select(s => new WorkScheduleDto
+            {
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime
+            });
         }
 
         public async Task SetWorkScheduleAsync(int psychologistId, List<WorkScheduleDto> schedules)
@@ -170,6 +182,129 @@ namespace TelePsy.BLL.Services
 
             await _unitOfWork.Repository<BlockedSlot>().AddAsync(blockedSlot);
             await _unitOfWork.CompleteAsync();
+        }
+
+        public async Task<BookingResponseDto> InitiateBookingAsync(string userId, InitiateBookingDto dto)
+        {
+            // 1. Get PatientId from UserId
+            var person = (await _unitOfWork.Repository<Person>().GetAsync(p => p.UserId == userId)).FirstOrDefault();
+            if (person == null) throw new Exception("Person profile not found for user.");
+
+            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(p => p.PersonId == person.Id)).FirstOrDefault();
+            if (patient == null) throw new Exception("Patient profile not found.");
+
+            // 2. Validate availability (simple check for now)
+            var isBusy = (await _unitOfWork.Repository<Appointment>().GetAsync(a =>
+                a.PsychologistId == dto.PsychologistId &&
+                a.ScheduledTime == dto.ScheduledTime &&
+                a.Status != AppointmentStatus.Cancelled)).Any();
+
+            if (isBusy) throw new Exception("The selected time slot is no longer available.");
+
+            // 3. Create Appointment in Pending status
+            var appointment = new Appointment
+            {
+                PatientId = patient.Id,
+                PsychologistId = dto.PsychologistId,
+                TherapyId = dto.TherapyId,
+                ScheduledTime = dto.ScheduledTime,
+                DurationMinutes = 45, // Default
+                Status = AppointmentStatus.Pending,
+                VideoLink = string.Empty // Will be generated after payment
+            };
+
+            // Calculate rate
+            var therapyConfig = await _unitOfWork.Repository<PsychologistTherapy>().GetFirstOrDefaultAsync(
+                pt => pt.PsychologistId == dto.PsychologistId && pt.TherapyId == dto.TherapyId && pt.IsActive
+            );
+
+            if (therapyConfig != null)
+            {
+                appointment.Rate = therapyConfig.Rate;
+            }
+            else
+            {
+                var psychologist = await _unitOfWork.Repository<Psychologist>().GetByIdAsync(dto.PsychologistId);
+                appointment.Rate = psychologist?.SessionRate ?? 0;
+            }
+
+            await _unitOfWork.Repository<Appointment>().AddAsync(appointment);
+            await _unitOfWork.CompleteAsync(); // Save to get Appointment.Id
+
+            // 4. Create Invoice for the appointment
+            var invoice = new Invoice
+            {
+                InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{appointment.Id}-{Guid.NewGuid().ToString().Substring(0, 4)}",
+                IssueDate = DateTime.UtcNow,
+                TotalAmount = appointment.Rate,
+                Type = InvoiceType.ClientPurchase,
+                Status = InvoiceStatus.Issued,
+                PatientId = patient.Id
+            };
+
+            await _unitOfWork.Repository<Invoice>().AddAsync(invoice);
+            await _unitOfWork.CompleteAsync(); // Save to get Invoice.Id
+
+            // 5. Create InvoiceDetail to link them
+            var detail = new InvoiceDetail
+            {
+                InvoiceId = invoice.Id,
+                AppointmentId = appointment.Id,
+                Description = $"Sesión de Terapia - {appointment.ScheduledTime:dd/MM/yyyy HH:mm}",
+                UnitPrice = appointment.Rate,
+                Total = appointment.Rate,
+                CommissionAmount = appointment.Rate * 0.30m // Assuming 30% commission
+            };
+
+            await _unitOfWork.Repository<InvoiceDetail>().AddAsync(detail);
+            await _unitOfWork.CompleteAsync();
+            
+            return new BookingResponseDto
+            {
+                AppointmentId = appointment.Id,
+                Message = "Booking initiated successfully"
+            };
+        }
+
+        public async Task<CheckoutSummaryDto> GetCheckoutSummaryAsync(int appointmentId)
+        {
+            var appointment = await _unitOfWork.Repository<Appointment>().GetFirstOrDefaultAsync(
+                a => a.Id == appointmentId,
+                includeProperties: "Psychologist.Person,Therapy"
+            );
+
+            if (appointment == null) throw new Exception("Appointment not found");
+
+            // Find the associated invoice
+            // Note: Currently we don't have a direct link from Appointment to Invoice in the entity,
+            // but we can find the invoice where the PatientId matches and it's a ClientPurchase for this amount?
+            // Better: We should probably add an InvoiceId to Appointment or link them via InvoiceDetail.
+            
+            // Let's check InvoiceDetail
+            var invoiceDetail = (await _unitOfWork.Repository<InvoiceDetail>().GetAsync(d => d.AppointmentId == appointmentId)).FirstOrDefault();
+            
+            int invoiceId = 0;
+            if (invoiceDetail != null)
+            {
+                invoiceId = invoiceDetail.InvoiceId;
+            }
+            else
+            {
+                // Fallback: search for the latest invoice for this patient created around now
+                var invoice = (await _unitOfWork.Repository<Invoice>().GetAsync(
+                    i => i.PatientId == appointment.PatientId && i.Type == InvoiceType.ClientPurchase)).OrderByDescending(i => i.Id).FirstOrDefault();
+                invoiceId = invoice?.Id ?? 0;
+            }
+
+            return new CheckoutSummaryDto
+            {
+                AppointmentId = appointment.Id,
+                InvoiceId = invoiceId,
+                PsychologistName = appointment.Psychologist?.Person != null ? $"{appointment.Psychologist.Person.FirstName} {appointment.Psychologist.Person.LastName}" : "Unknown",
+                TherapyName = appointment.Therapy?.Name ?? "General Session",
+                ScheduledTime = appointment.ScheduledTime,
+                Amount = appointment.Rate
+            };
         }
     }
 }

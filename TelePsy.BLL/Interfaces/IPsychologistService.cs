@@ -15,5 +15,14 @@ namespace TelePsy.BLL.Interfaces
         Task<IEnumerable<Psychologist>> GetVerifiedPsychologistsAsync();
         Task UploadCvAsync(int psychologistId, Stream fileStream, string fileName);
         Task UploadProfilePictureAsync(int psychologistId, Stream fileStream, string fileName);
+        Task<IEnumerable<Therapy>> GetAvailableTherapiesAsync();
+        Task<IEnumerable<PsychologistTherapyDto>> GetPsychologistServicesAsync(int psychologistId);
+        Task UpdatePsychologistServiceAsync(int psychologistId, UpdatePsychologistServiceDto dto);
+        Task<IEnumerable<PatientListItemDto>> GetPatientsByPsychologistAsync(int psychologistId);
+        
+        // Specialties (mapped to Therapies)
+        Task<IEnumerable<SpecialtyDto>> GetAvailableSpecialtiesAsync();
+        Task<IEnumerable<SpecialtyDto>> GetPsychologistSpecialtiesAsync(int psychologistId);
+        Task UpdatePsychologistSpecialtyAsync(int psychologistId, UpdatePsychologistSpecialtyDto dto);
     }
 }
