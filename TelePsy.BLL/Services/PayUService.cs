@@ -145,6 +145,14 @@ namespace TelePsy.BLL.Services
                     invoice.Status = InvoiceStatus.Paid;
                     _unitOfWork.Repository<Invoice>().Update(invoice);
                 }
+
+                var appointment = (await _unitOfWork.Repository<Appointment>().GetAsync(a => a.Id == payment.AppointmentId))
+                    .FirstOrDefault();
+                if (appointment != null)
+                {
+                    appointment.Status = AppointmentStatus.Confirmed;
+                    _unitOfWork.Repository<Appointment>().Update(appointment);
+                }
             }
             else if (data.State == 6) // Declined
             {
@@ -172,8 +180,8 @@ namespace TelePsy.BLL.Services
         private string GenerateConfirmationSignature(string referenceCode, decimal amount, string currency, int state)
         {
             // Confirmation Signature: ApiKey~merchant_id~reference_sale~value~currency~state_pol
-            // Note: Use the value as received in the confirmation, which might have decimals.
-            string amountStr = FormatAmount(amount);
+            // Note: Use exactly one decimal without dropping it even if it's .0 as per PayU specifications.
+            string amountStr = amount.ToString("F1", CultureInfo.InvariantCulture);
             string rawSignature = $"{_apiKey}~{_merchantId}~{referenceCode}~{amountStr}~{currency}~{state}";
             return ComputeMd5(rawSignature);
         }
