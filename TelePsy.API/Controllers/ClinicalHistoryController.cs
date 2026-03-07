@@ -91,7 +91,11 @@ namespace TelePsy.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                string msg = ex.Message;
+                if (ex.InnerException != null)
+                    msg += " Inner: " + ex.InnerException.Message;
+
+                return BadRequest(new { message = msg, stack = ex.StackTrace });
             }
         }
     }

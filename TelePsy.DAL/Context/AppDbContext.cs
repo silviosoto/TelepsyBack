@@ -25,6 +25,7 @@ namespace TelePsy.DAL.Context
         public DbSet<BlockedSlot> BlockedSlots { get; set; }
         public DbSet<Therapy> Therapies { get; set; }
         public DbSet<PsychologistTherapy> PsychologistTherapies { get; set; }
+        public DbSet<PsychologyNote> PsychologyNotes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

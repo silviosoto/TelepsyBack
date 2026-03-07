@@ -25,7 +25,8 @@ namespace TelePsy.BLL.Services
                 EntityName = entityName,
                 EntityId = entityId,
                 Details = details,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                IPAddress = "Unknown"
             };
 
             await _unitOfWork.Repository<AuditLog>().AddAsync(log);
