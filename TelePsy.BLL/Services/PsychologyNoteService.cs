@@ -33,6 +33,28 @@ namespace TelePsy.BLL.Services
             await _auditService.LogAsync(note.PsychologistId.ToString(), "Create", "PsychologyNote", note.Id.ToString(), "Created new session note");
         }
 
+        public async Task UpdateNoteAsync(PsychologyNote note)
+        {
+            var existingNote = await _unitOfWork.Repository<PsychologyNote>().GetByIdAsync(note.Id);
+            if (existingNote == null || existingNote.PsychologistId != note.PsychologistId)
+                throw new System.Exception("Note not found or unauthorized");
+
+            existingNote.SessionNumber = note.SessionNumber;
+            existingNote.NextAppointmentDate = note.NextAppointmentDate;
+            existingNote.ProfessionalSignature = note.ProfessionalSignature;
+
+            // Encrypt updated sensitive fields
+            existingNote.ReasonForSession = _encryptionService.Encrypt(note.ReasonForSession);
+            existingNote.Evolution = _encryptionService.Encrypt(note.Evolution);
+            existingNote.Interventions = _encryptionService.Encrypt(note.Interventions);
+            existingNote.TherapeuticPlan = _encryptionService.Encrypt(note.TherapeuticPlan);
+
+            _unitOfWork.Repository<PsychologyNote>().Update(existingNote);
+            await _unitOfWork.CompleteAsync();
+
+            await _auditService.LogAsync(note.PsychologistId.ToString(), "Update", "PsychologyNote", note.Id.ToString(), "Updated session note");
+        }
+
         public async Task<IEnumerable<PsychologyNote>> GetNotesForPatientAsync(int patientId, int psychologistId)
         {
             // Usually notes might be shared, or strict per psychologist. For now, pull notes for that patient that this psychologist has access to.

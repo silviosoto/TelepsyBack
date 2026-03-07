@@ -7,6 +7,7 @@ namespace TelePsy.BLL.Interfaces
     public interface IPsychologyNoteService
     {
         Task CreateNoteAsync(PsychologyNote note);
+        Task UpdateNoteAsync(PsychologyNote note);
         Task<IEnumerable<PsychologyNote>> GetNotesForPatientAsync(int patientId, int psychologistId);
     }
 }
