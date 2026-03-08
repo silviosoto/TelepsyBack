@@ -154,6 +154,22 @@ namespace TelePsy.BLL.Services
             return invoice;
         }
 
+        public async Task<IEnumerable<Invoice>> GetPatientInvoicesByUserIdAsync(string userId)
+        {
+            var person = (await _unitOfWork.Repository<Person>().GetAsync(p => p.UserId == userId)).FirstOrDefault();
+            if (person == null) return new List<Invoice>();
+
+            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(p => p.PersonId == person.Id)).FirstOrDefault();
+            if (patient == null) return new List<Invoice>();
+
+            var invoices = await _unitOfWork.Repository<Invoice>().GetAsync(
+                i => i.PatientId == patient.Id && i.Type == InvoiceType.ClientPurchase,
+                includeProperties: "Details,Details.Appointment,Payment");
+
+            // Sort by issue date descending (newest first)
+            return invoices.OrderByDescending(i => i.IssueDate);
+        }
+
         public async Task<IEnumerable<Appointment>> GetUnpaidAppointmentsForPsychologistAsync(int psychologistId)
         {
             return await _unitOfWork.Repository<Appointment>().GetAsync(

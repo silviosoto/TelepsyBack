@@ -115,6 +115,7 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<IClinicalRecordService, ClinicalRecordService>();
 builder.Services.AddScoped<IPsychologyNoteService, PsychologyNoteService>();
+builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IPsychologistService, PsychologistService>();
 builder.Services.AddScoped<IVideoService, ZoomVideoService>();

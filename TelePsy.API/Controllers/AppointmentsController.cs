@@ -67,6 +67,24 @@ namespace TelePsy.API.Controllers
             }
         }
 
+        [HttpGet("my-appointments")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> GetMyAppointments()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var result = await _appointmentService.GetPatientAppointmentsByUserIdAsync(userId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [Authorize(Roles = "Patient")]
         [HttpGet("patient/{patientId}")]
         public async Task<IActionResult> GetForPatient(int patientId)
