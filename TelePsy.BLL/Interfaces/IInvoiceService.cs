@@ -9,6 +9,7 @@ namespace TelePsy.BLL.Interfaces
         Task<Invoice> GeneratePatientInvoiceAsync(int paymentId);
         Task<Invoice> GeneratePsychologistPayoutAsync(int psychologistId, List<int> appointmentIds);
         Task<Invoice> GetInvoiceByIdAsync(int id);
+        Task<IEnumerable<Invoice>> GetPatientInvoicesByUserIdAsync(string userId);
         Task<IEnumerable<Appointment>> GetUnpaidAppointmentsForPsychologistAsync(int psychologistId);
         Task UpdateGlobalCommissionAsync(decimal rate);
         Task<decimal> GetGlobalCommissionAsync();

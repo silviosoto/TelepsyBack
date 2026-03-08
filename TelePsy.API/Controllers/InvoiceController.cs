@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
 using TelePsy.Domain.Entities;
@@ -15,6 +16,24 @@ namespace TelePsy.API.Controllers
         public InvoiceController(IInvoiceService invoiceService)
         {
             _invoiceService = invoiceService;
+        }
+
+        [HttpGet("my-invoices")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Patient")]
+        public async Task<IActionResult> GetMyInvoices()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var result = await _invoiceService.GetPatientInvoicesByUserIdAsync(userId);
+                return Ok(result);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("patient/generate/{paymentId}")]

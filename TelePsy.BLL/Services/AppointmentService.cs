@@ -64,7 +64,18 @@ namespace TelePsy.BLL.Services
         public async Task<IEnumerable<Appointment>> GetAppointmentsForPatientAsync(int patientId)
         {
             return await _unitOfWork.Repository<Appointment>().GetAsync(a => a.PatientId == patientId,
-                includeProperties: "Patient.Person,Psychologist.Person");
+                includeProperties: "Patient.Person,Psychologist.Person,Therapy");
+        }
+
+        public async Task<IEnumerable<Appointment>> GetPatientAppointmentsByUserIdAsync(string userId)
+        {
+            var person = (await _unitOfWork.Repository<Person>().GetAsync(p => p.UserId == userId)).FirstOrDefault();
+            if (person == null) return new List<Appointment>();
+
+            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(p => p.PersonId == person.Id)).FirstOrDefault();
+            if (patient == null) return new List<Appointment>();
+
+            return await GetAppointmentsForPatientAsync(patient.Id);
         }
 
         public async Task<IEnumerable<Appointment>> GetAppointmentsForPsychologistAsync(int psychologistId)
