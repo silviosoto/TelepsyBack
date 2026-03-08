@@ -26,6 +26,8 @@ namespace TelePsy.DAL.Context
         public DbSet<Therapy> Therapies { get; set; }
         public DbSet<PsychologistTherapy> PsychologistTherapies { get; set; }
         public DbSet<PsychologyNote> PsychologyNotes { get; set; }
+        public DbSet<Specialty> Specialties { get; set; }
+        public DbSet<PsychologistSpecialty> PsychologistSpecialties { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -170,7 +172,27 @@ namespace TelePsy.DAL.Context
                     .HasForeignKey(a => a.TherapyId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.Property(a => a.Rate).HasColumnType("decimal(18,2)");
+            });
+
+            // Specialty Configurations
+            builder.Entity<Specialty>(entity =>
+            {
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(150);
+                entity.Property(e => e.Description).HasMaxLength(500);
+            });
+
+            // PsychologistSpecialty Configuration
+            builder.Entity<PsychologistSpecialty>(entity =>
+            {
+                entity.HasOne(ps => ps.Psychologist)
+                    .WithMany(p => p.Specialties)
+                    .HasForeignKey(ps => ps.PsychologistId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ps => ps.Specialty)
+                    .WithMany(s => s.PsychologistSpecialties)
+                    .HasForeignKey(ps => ps.SpecialtyId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

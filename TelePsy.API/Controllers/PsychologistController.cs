@@ -86,9 +86,9 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpGet("available-therapies")]
-        public async Task<IActionResult> GetAvailableTherapies()
+        public async Task<IActionResult> GetAvailableTherapies([FromQuery] string? query = null, [FromQuery] int? limit = null)
         {
-            var therapies = await _psychologistService.GetAvailableTherapiesAsync();
+            var therapies = await _psychologistService.GetAvailableTherapiesAsync(query, limit);
             return Ok(therapies);
         }
 
@@ -159,9 +159,9 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpGet("available-specialties")]
-        public async Task<IActionResult> GetAvailableSpecialties()
+        public async Task<IActionResult> GetAvailableSpecialties([FromQuery] string? query = null, [FromQuery] int? limit = null)
         {
-            var specialties = await _psychologistService.GetAvailableSpecialtiesAsync();
+            var specialties = await _psychologistService.GetAvailableSpecialtiesAsync(query, limit);
             return Ok(specialties);
         }
 

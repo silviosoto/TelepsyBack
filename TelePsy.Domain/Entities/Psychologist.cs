@@ -23,5 +23,6 @@ namespace TelePsy.Domain.Entities
 
         public ICollection<Appointment> Appointments { get; set; }
         public ICollection<PsychologistTherapy> Therapies { get; set; }
+        public ICollection<PsychologistSpecialty> Specialties { get; set; }
     }
 }

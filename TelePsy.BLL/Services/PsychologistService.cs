@@ -106,9 +106,22 @@ namespace TelePsy.BLL.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task<IEnumerable<Therapy>> GetAvailableTherapiesAsync()
+        public async Task<IEnumerable<Therapy>> GetAvailableTherapiesAsync(string? searchQuery = null, int? limit = null)
         {
-            return await _unitOfWork.Repository<Therapy>().GetAsync(t => t.IsActive);
+            var therapies = await _unitOfWork.Repository<Therapy>().GetAsync(t => t.IsActive);
+            
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                therapies = therapies.Where(t => t.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || 
+                                                 t.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            if (limit.HasValue)
+            {
+                therapies = therapies.Take(limit.Value);
+            }
+            
+            return therapies;
         }
 
         public async Task<IEnumerable<PsychologistTherapyDto>> GetPsychologistServicesAsync(int psychologistId)
@@ -185,53 +198,64 @@ namespace TelePsy.BLL.Services
                 }).ToList();
         }
 
-        public async Task<IEnumerable<SpecialtyDto>> GetAvailableSpecialtiesAsync()
+        public async Task<IEnumerable<SpecialtyDto>> GetAvailableSpecialtiesAsync(string? searchQuery = null, int? limit = null)
         {
-            var therapies = await _unitOfWork.Repository<Therapy>().GetAsync(t => t.IsActive);
-            return therapies.Select(t => new SpecialtyDto
+            var specialties = await _unitOfWork.Repository<Specialty>().GetAsync(s => s.IsActive);
+            
+            if (!string.IsNullOrWhiteSpace(searchQuery))
             {
-                Id = t.Id,
-                Name = t.Name,
-                Description = t.Description
+                specialties = specialties.Where(s => s.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || 
+                                                     (s.Description != null && s.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
+            }
+            
+            if (limit.HasValue)
+            {
+                specialties = specialties.Take(limit.Value);
+            }
+            
+            return specialties.Select(s => new SpecialtyDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Description = s.Description ?? string.Empty
             });
         }
 
         public async Task<IEnumerable<SpecialtyDto>> GetPsychologistSpecialtiesAsync(int psychologistId)
         {
-            var therapies = await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
-                pt => pt.PsychologistId == psychologistId && pt.IsActive,
-                includeProperties: "Therapy"
+            var specialties = await _unitOfWork.Repository<PsychologistSpecialty>().GetAsync(
+                ps => ps.PsychologistId == psychologistId && ps.IsActive,
+                includeProperties: "Specialty"
             );
 
-            return therapies.Select(pt => new SpecialtyDto
+            return specialties.Select(ps => new SpecialtyDto
             {
-                Id = pt.TherapyId,
-                Name = pt.Therapy?.Name ?? "Unknown",
-                Description = pt.Therapy?.Description ?? string.Empty
+                Id = ps.SpecialtyId,
+                Name = ps.Specialty?.Name ?? "Unknown",
+                Description = ps.Specialty?.Description ?? string.Empty
             });
         }
 
         public async Task UpdatePsychologistSpecialtyAsync(int psychologistId, UpdatePsychologistSpecialtyDto dto)
         {
-            var existing = (await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
-                pt => pt.PsychologistId == psychologistId && pt.TherapyId == dto.SpecialtyId
+            var existing = (await _unitOfWork.Repository<PsychologistSpecialty>().GetAsync(
+                ps => ps.PsychologistId == psychologistId && ps.SpecialtyId == dto.SpecialtyId
             )).FirstOrDefault();
 
             if (existing != null)
             {
                 existing.IsActive = dto.IsActive;
-                _unitOfWork.Repository<PsychologistTherapy>().Update(existing);
+                _unitOfWork.Repository<PsychologistSpecialty>().Update(existing);
             }
             else if (dto.IsActive)
             {
-                var newSpecialty = new PsychologistTherapy
+                var newSpecialty = new PsychologistSpecialty
                 {
                     PsychologistId = psychologistId,
-                    TherapyId = dto.SpecialtyId,
-                    IsActive = true,
-                    Rate = 0 // Default rate for specialty-only selection
+                    SpecialtyId = dto.SpecialtyId,
+                    IsActive = true
                 };
-                await _unitOfWork.Repository<PsychologistTherapy>().AddAsync(newSpecialty);
+                await _unitOfWork.Repository<PsychologistSpecialty>().AddAsync(newSpecialty);
             }
 
             await _unitOfWork.CompleteAsync();
