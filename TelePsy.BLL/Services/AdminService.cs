@@ -94,5 +94,73 @@ namespace TelePsy.BLL.Services
             await _auditService.LogAsync("Admin", "Update", "GlobalConfiguration", 
                 "CommissionRate", $"Commission rate updated to {rate}");
         }
+
+        public async Task<(IEnumerable<Patient> Patients, int TotalCount)> GetPatientsAsync(int page, int pageSize, string? searchTerm, DateTime? creationDate)
+        {
+            var query = await _unitOfWork.Repository<Patient>().GetAsync(includeProperties: "Person,Person.User");
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var lowerSearch = searchTerm.ToLower();
+                query = query.Where(p => 
+                    p.Person.FirstName.ToLower().Contains(lowerSearch) ||
+                    p.Person.LastName.ToLower().Contains(lowerSearch) ||
+                    (p.Person.User != null && p.Person.User.Email != null && p.Person.User.Email.ToLower().Contains(lowerSearch))
+                );
+            }
+
+            // Filtering by a specific date
+            if (creationDate.HasValue)
+            {
+                query = query.Where(p => p.Person.User != null && p.Person.User.CreatedAt.Date == creationDate.Value.Date);
+            }
+
+            int totalCount = query.Count();
+
+            // Pagination
+            var pagedData = query
+                .OrderByDescending(p => p.Person.User != null ? p.Person.User.CreatedAt : DateTime.MinValue)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return (pagedData, totalCount);
+        }
+
+        public async Task<(IEnumerable<Psychologist> Psychologists, int TotalCount)> GetPsychologistsAsync(int page, int pageSize, string? searchTerm, bool? isVerified, DateTime? creationDate)
+        {
+            var query = await _unitOfWork.Repository<Psychologist>().GetAsync(includeProperties: "Person,Person.User");
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var lowerSearch = searchTerm.ToLower();
+                query = query.Where(p => 
+                    p.Person.FirstName.ToLower().Contains(lowerSearch) ||
+                    p.Person.LastName.ToLower().Contains(lowerSearch) ||
+                    (p.Person.User != null && p.Person.User.Email != null && p.Person.User.Email.ToLower().Contains(lowerSearch))
+                );
+            }
+
+            if (isVerified.HasValue)
+            {
+                query = query.Where(p => p.IsVerified == isVerified.Value);
+            }
+
+            // Filtering by a specific date
+            if (creationDate.HasValue)
+            {
+                query = query.Where(p => p.Person.User != null && p.Person.User.CreatedAt.Date == creationDate.Value.Date);
+            }
+
+            int totalCount = query.Count();
+
+            var pagedData = query
+                .OrderByDescending(p => p.Person.User != null ? p.Person.User.CreatedAt : DateTime.MinValue)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return (pagedData, totalCount);
+        }
     }
 }
