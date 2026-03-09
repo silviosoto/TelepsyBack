@@ -11,6 +11,7 @@ using TelePsy.DAL.Repositories;
 using TelePsy.Domain.Entities;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,6 +113,12 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IResend, ResendClient>();
+builder.Services.Configure<ResendClientOptions>(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiKey"] ?? "re_placeholder";
+});
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<IClinicalRecordService, ClinicalRecordService>();
 builder.Services.AddScoped<IPsychologyNoteService, PsychologyNoteService>();

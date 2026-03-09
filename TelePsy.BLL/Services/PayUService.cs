@@ -16,6 +16,7 @@ namespace TelePsy.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
         private readonly string _merchantId;
         private readonly string _apiKey;
         private readonly string _accountId;
@@ -23,17 +24,18 @@ namespace TelePsy.BLL.Services
         private readonly string _responseUrl;
         private readonly string _confirmationUrl;
 
-        public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration)
+        public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
-            _merchantId = _configuration["PayU:MerchantId"];
-            _apiKey = _configuration["PayU:ApiKey"];
-            _accountId = _configuration["PayU:AccountId"];
+            _emailService = emailService;
+            _merchantId = _configuration["PayU:MerchantId"] ?? string.Empty;
+            _apiKey = _configuration["PayU:ApiKey"] ?? string.Empty;
+            _accountId = _configuration["PayU:AccountId"] ?? string.Empty;
             _checkoutUrl = _configuration["PayU:CheckoutUrl"] ??
                            "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/";
-            _responseUrl = _configuration["PayU:ResponseUrl"];
-            _confirmationUrl = _configuration["PayU:ConfirmationUrl"];
+            _responseUrl = _configuration["PayU:ResponseUrl"] ?? string.Empty;
+            _confirmationUrl = _configuration["PayU:ConfirmationUrl"] ?? string.Empty;
         }
 
         public async Task<string> CreatePaymentRequestAsync(int invoiceId)
@@ -152,6 +154,25 @@ namespace TelePsy.BLL.Services
                 {
                     appointment.Status = AppointmentStatus.Confirmed;
                     _unitOfWork.Repository<Appointment>().Update(appointment);
+
+                    // Send email notification to psychologist
+                    try
+                    {
+                        var fullAppointment = (await _unitOfWork.Repository<Appointment>().GetAsync(
+                            a => a.Id == appointment.Id,
+                            includeProperties: "Patient.Person,Psychologist.Person.User,Therapy"
+                        )).FirstOrDefault();
+
+                        if (fullAppointment != null)
+                        {
+                            await _emailService.SendAppointmentNotificationAsync(fullAppointment);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // In production, log error but don't fail payment confirmation
+                        Console.WriteLine($"Error sending email notification: {ex.Message}");
+                    }
                 }
             }
             else if (data.State == 6) // Declined

@@ -210,15 +210,46 @@ namespace TelePsy.BLL.Services
             return (pagedData, totalCount);
         }
 
-        public async Task<IEnumerable<Payment>> GetPsychologistPaymentsAsync(int psychologistId)
+        public async Task<(IEnumerable<Payment> Payments, int TotalCount)> GetPsychologistPaymentsAsync(int psychologistId, int page = 1, int pageSize = 10, string? searchTerm = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null)
         {
-            // Fetching all appointments for this psychologist first to get their ids, 
-            // or we can just filter by related appointment's psychologistId
-            return await _unitOfWork.Repository<Payment>().GetAsync(
+            var query = await _unitOfWork.Repository<Payment>().GetAsync(
                 p => p.Appointment.PsychologistId == psychologistId,
-                includeProperties: "Appointment,Appointment.Patient,Appointment.Patient.Person",
-                orderBy: q => q.OrderByDescending(p => p.Date)
+                includeProperties: "Appointment,Appointment.Patient,Appointment.Patient.Person"
             );
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var lowerSearch = searchTerm.ToLower();
+                query = query.Where(p => 
+                    (p.Appointment.Patient.Person.FirstName.ToLower() + " " + p.Appointment.Patient.Person.LastName.ToLower()).Contains(lowerSearch) ||
+                    (p.TransactionId != null && p.TransactionId.ToLower().Contains(lowerSearch))
+                );
+            }
+
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                query = query.Where(p => p.Status == status);
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(p => p.Date.Date >= startDate.Value.Date);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(p => p.Date.Date <= endDate.Value.Date);
+            }
+
+            int totalCount = query.Count();
+
+            var pagedData = query
+                .OrderByDescending(p => p.Date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return (pagedData, totalCount);
         }
     }
 }
