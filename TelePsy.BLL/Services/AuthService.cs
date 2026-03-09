@@ -21,17 +21,19 @@ namespace TelePsy.BLL.Services
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly TelePsy.DAL.Repositories.IUnitOfWork _unitOfWork;
+        private readonly IFileStorageService _fileStorageService;
 
         public AuthService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration, TelePsy.DAL.Repositories.IUnitOfWork unitOfWork)
+            IConfiguration configuration, TelePsy.DAL.Repositories.IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _unitOfWork = unitOfWork;
+            _fileStorageService = fileStorageService;
         }
 
-        public async Task<AuthResponseDto> RegisterAsync(RegisterDto model)
+        public async Task<AuthResponseDto> RegisterAsync(RegisterDto model, Microsoft.AspNetCore.Http.IFormFile? cvFile = null)
         {
             var userExists = await _userManager.FindByEmailAsync(model.Email);
             if (userExists != null)
@@ -46,7 +48,10 @@ namespace TelePsy.BLL.Services
 
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
-                throw new Exception("User creation failed! Please check user details and try again.");
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"User creation failed! {errors}");
+            }
 
             // Create Person
             var person = new Person
@@ -54,7 +59,13 @@ namespace TelePsy.BLL.Services
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 UserId = user.Id,
-                IsActive = true
+                IsActive = true,
+                Gender = "No especificado",
+                PhoneNumber = "Sin número",
+                Address = "Sin dirección",
+                City = "Sin ciudad",
+                State = "Sin departamento",
+                Country = "Colombia"
             };
 
             await _unitOfWork.Repository<Person>().AddAsync(person);
@@ -70,12 +81,35 @@ namespace TelePsy.BLL.Services
 
             if (model.Role == "Patient")
             {
-                var patient = new Patient { PersonId = person.Id, IsActive = true };
+                var patient = new Patient 
+                { 
+                    PersonId = person.Id, 
+                    IsActive = true,
+                    Occupation = "No especificada",
+                    EmergencyContact = "No especificado",
+                    PreferredGender = "No especificado",
+                    Interests = ""
+                };
                 await _unitOfWork.Repository<Patient>().AddAsync(patient);
             }
             else if (model.Role == "Psychologist")
             {
-                var psychologist = new Psychologist { PersonId = person.Id, IsActive = true };
+                var psychologist = new Psychologist 
+                { 
+                    PersonId = person.Id, 
+                    IsActive = true,
+                    LicenseNumber = "Pendiente",
+                    Specialization = "Pendiente",
+                    University = "Pendiente",
+                    Bio = "",
+                    Hobbies = ""
+                };
+
+                if (cvFile != null)
+                {
+                    psychologist.CvPath = await _fileStorageService.SaveFileAsync(cvFile.OpenReadStream(), cvFile.FileName, "psychologist-cvs");
+                }
+
                 await _unitOfWork.Repository<Psychologist>().AddAsync(psychologist);
             }
 
