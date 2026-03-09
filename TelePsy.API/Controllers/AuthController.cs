@@ -16,16 +16,18 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto model)
+        public async Task<IActionResult> Register([FromForm] RegisterDto model, Microsoft.AspNetCore.Http.IFormFile? cvFile = null)
         {
             try
             {
-                var result = await _authService.RegisterAsync(model);
+                var result = await _authService.RegisterAsync(model, cvFile);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                var msg = ex.Message;
+                if (ex.InnerException != null) msg += " Inner: " + ex.InnerException.Message;
+                return BadRequest(new { message = msg });
             }
         }
 
