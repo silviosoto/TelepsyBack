@@ -13,5 +13,8 @@ namespace TelePsy.BLL.Interfaces
         Task UpdateCommissionRateAsync(decimal rate);
         Task<(IEnumerable<Patient> Patients, int TotalCount)> GetPatientsAsync(int page, int pageSize, string? searchTerm, DateTime? creationDate);
         Task<(IEnumerable<Psychologist> Psychologists, int TotalCount)> GetPsychologistsAsync(int page, int pageSize, string? searchTerm, bool? isVerified, DateTime? creationDate);
+        Task<Psychologist?> GetPsychologistDetailsAsync(int id);
+        Task<(IEnumerable<Appointment> Appointments, int TotalCount)> GetPsychologistAppointmentsAsync(int psychologistId, int page, int pageSize, string? searchTerm, DateTime? startDate, DateTime? endDate);
+        Task<IEnumerable<Payment>> GetPsychologistPaymentsAsync(int psychologistId);
     }
 }
