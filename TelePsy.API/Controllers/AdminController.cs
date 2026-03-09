@@ -192,21 +192,27 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpGet("psychologists/{id}/payments")]
-        public async Task<IActionResult> GetPsychologistPayments(int id)
+        public async Task<IActionResult> GetPsychologistPayments(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] string? status = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
             {
-                var payments = await _adminService.GetPsychologistPaymentsAsync(id);
-                return Ok(payments.Select(p => new
+                var (payments, totalCount) = await _adminService.GetPsychologistPaymentsAsync(id, page, pageSize, searchTerm, status, startDate, endDate);
+                return Ok(new
                 {
-                    p.Id,
-                    p.Amount,
-                    p.Date,
-                    p.Status,
-                    p.TransactionId,
-                    PatientName = $"{p.Appointment?.Patient?.Person?.FirstName} {p.Appointment?.Patient?.Person?.LastName}",
-                    AppointmentId = p.AppointmentId
-                }));
+                    Data = payments.Select(p => new
+                    {
+                        p.Id,
+                        p.Amount,
+                        p.Date,
+                        p.Status,
+                        p.TransactionId,
+                        PatientName = $"{p.Appointment?.Patient?.Person?.FirstName} {p.Appointment?.Patient?.Person?.LastName}",
+                        AppointmentId = p.AppointmentId
+                    }),
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                });
             }
             catch (System.Exception ex)
             {
