@@ -126,11 +126,98 @@ namespace TelePsy.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("psychologists/{id}")]
+        public async Task<IActionResult> GetPsychologistDetails(int id)
+        {
+            try
+            {
+                var p = await _adminService.GetPsychologistDetailsAsync(id);
+                if (p == null) return NotFound();
+
+                return Ok(new
+                {
+                    p.Id,
+                    FullName = $"{p.Person?.FirstName} {p.Person?.LastName}",
+                    Email = p.Person?.User?.Email,
+                    Phone = p.Person?.PhoneNumber,
+                    Address = p.Person?.Address,
+                    City = p.Person?.City,
+                    p.Specialization,
+                    p.LicenseNumber,
+                    p.University,
+                    p.ExperienceYears,
+                    p.Bio,
+                    p.Hobbies,
+                    p.CvPath,
+                    p.IsVerified,
+                    p.IsActive,
+                    CreatedAt = p.Person?.User?.CreatedAt,
+                    Specialties = p.Specialties?.Select(s => s.Specialty?.Name),
+                    Therapies = p.Therapies?.Select(t => new { t.Therapy?.Name, t.Rate })
+                });
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("psychologists/{id}/appointments")]
+        public async Task<IActionResult> GetPsychologistAppointments(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
+        {
+            try
+            {
+                var (appointments, totalCount) = await _adminService.GetPsychologistAppointmentsAsync(id, page, pageSize, searchTerm, startDate, endDate);
+                return Ok(new
+                {
+                    Data = appointments.Select(a => new
+                    {
+                        a.Id,
+                        PatientName = $"{a.Patient?.Person?.FirstName} {a.Patient?.Person?.LastName}",
+                        TherapyName = a.Therapy?.Name,
+                        a.ScheduledTime,
+                        a.Status,
+                        a.Rate
+                    }),
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                });
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("psychologists/{id}/payments")]
+        public async Task<IActionResult> GetPsychologistPayments(int id)
+        {
+            try
+            {
+                var payments = await _adminService.GetPsychologistPaymentsAsync(id);
+                return Ok(payments.Select(p => new
+                {
+                    p.Id,
+                    p.Amount,
+                    p.Date,
+                    p.Status,
+                    p.TransactionId,
+                    PatientName = $"{p.Appointment?.Patient?.Person?.FirstName} {p.Appointment?.Patient?.Person?.LastName}",
+                    AppointmentId = p.AppointmentId
+                }));
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 
     public class RejectDto
     {
-        public string Reason { get; set; }
+        public string Reason { get; set; } = string.Empty;
     }
 
     public class CommissionDto

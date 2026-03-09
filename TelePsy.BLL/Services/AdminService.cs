@@ -162,5 +162,63 @@ namespace TelePsy.BLL.Services
 
             return (pagedData, totalCount);
         }
+
+        public async Task<Psychologist?> GetPsychologistDetailsAsync(int id)
+        {
+            var psychologist = (await _unitOfWork.Repository<Psychologist>().GetAsync(
+                p => p.Id == id,
+                includeProperties: "Person,Person.User,Specialties,Specialties.Specialty,Therapies,Therapies.Therapy"
+            )).FirstOrDefault();
+
+            return psychologist;
+        }
+
+        public async Task<(IEnumerable<Appointment> Appointments, int TotalCount)> GetPsychologistAppointmentsAsync(int psychologistId, int page, int pageSize, string? searchTerm, DateTime? startDate, DateTime? endDate)
+        {
+            var query = await _unitOfWork.Repository<Appointment>().GetAsync(
+                a => a.PsychologistId == psychologistId,
+                includeProperties: "Patient,Patient.Person,Therapy"
+            );
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var lowerSearch = searchTerm.ToLower();
+                query = query.Where(a => 
+                    (a.Patient?.Person?.FirstName?.ToLower() ?? "").Contains(lowerSearch) ||
+                    (a.Patient?.Person?.LastName?.ToLower() ?? "").Contains(lowerSearch)
+                );
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(a => a.ScheduledTime.Date >= startDate.Value.Date);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(a => a.ScheduledTime.Date <= endDate.Value.Date);
+            }
+
+            int totalCount = query.Count();
+
+            var pagedData = query
+                .OrderByDescending(a => a.ScheduledTime)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return (pagedData, totalCount);
+        }
+
+        public async Task<IEnumerable<Payment>> GetPsychologistPaymentsAsync(int psychologistId)
+        {
+            // Fetching all appointments for this psychologist first to get their ids, 
+            // or we can just filter by related appointment's psychologistId
+            return await _unitOfWork.Repository<Payment>().GetAsync(
+                p => p.Appointment.PsychologistId == psychologistId,
+                includeProperties: "Appointment,Appointment.Patient,Appointment.Patient.Person",
+                orderBy: q => q.OrderByDescending(p => p.Date)
+            );
+        }
     }
 }
