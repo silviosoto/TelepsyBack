@@ -36,9 +36,13 @@ namespace TelePsy.DAL.Context
                 };
                 await userManager.CreateAsync(adminUser, "Admin123!");
                 await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
 
-                // Create Person for Admin
-                var person = new Person
+            // Create Person for Admin if not exists
+            var adminPerson = context.People.FirstOrDefault(p => p.UserId == adminUser.Id);
+            if (adminPerson == null)
+            {
+                adminPerson = new Person
                 {
                     FirstName = "System",
                     LastName = "Administrator",
@@ -52,16 +56,21 @@ namespace TelePsy.DAL.Context
                     DateOfBirth = new DateTime(2000, 1, 1),
                     Gender = "Other"
                 };
-                context.People.Add(person);
+                context.People.Add(adminPerson);
                 await context.SaveChangesAsync();
+            }
 
-                var admin = new Admin
+            // Create Admin record if not exists
+            var adminRecord = context.Admins.FirstOrDefault(a => a.PersonId == adminPerson.Id);
+            if (adminRecord == null)
+            {
+                adminRecord = new Admin
                 {
-                    PersonId = person.Id,
+                    PersonId = adminPerson.Id,
                     IsActive = true,
                     Department = "IT Support"
                 };
-                context.Admins.Add(admin);
+                context.Admins.Add(adminRecord);
                 await context.SaveChangesAsync();
             }
 

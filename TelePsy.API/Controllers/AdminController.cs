@@ -65,6 +65,67 @@ namespace TelePsy.API.Controllers
             await _adminService.UpdateCommissionRateAsync(dto.Rate);
             return Ok();
         }
+
+        [HttpGet("patients")]
+        public async Task<IActionResult> GetPatients([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] System.DateTime? date = null)
+        {
+            try
+            {
+                var result = await _adminService.GetPatientsAsync(page, pageSize, search, date);
+                
+                var response = new 
+                {
+                    Data = result.Patients.Select(p => new
+                    {
+                        p.Id,
+                        FullName = $"{p.Person?.FirstName} {p.Person?.LastName}",
+                        Email = p.Person?.User?.Email,
+                        Phone = p.Person?.PhoneNumber,
+                        CreatedAt = p.Person?.User?.CreatedAt
+                    }),
+                    TotalCount = result.TotalCount,
+                    Page = page,
+                    PageSize = pageSize
+                };
+                return Ok(response);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("psychologists")]
+        public async Task<IActionResult> GetPsychologists([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] bool? isVerified = null, [FromQuery] System.DateTime? date = null)
+        {
+            try
+            {
+                var result = await _adminService.GetPsychologistsAsync(page, pageSize, search, isVerified, date);
+                
+                var response = new 
+                {
+                    Data = result.Psychologists.Select(p => new
+                    {
+                        p.Id,
+                        FullName = $"{p.Person?.FirstName} {p.Person?.LastName}",
+                        Email = p.Person?.User?.Email,
+                        Phone = p.Person?.PhoneNumber,
+                        p.Specialization,
+                        p.IsVerified,
+                        p.IsActive,
+                        CreatedAt = p.Person?.User?.CreatedAt
+                    }),
+                    TotalCount = result.TotalCount,
+                    Page = page,
+                    PageSize = pageSize
+                };
+                return Ok(response);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 
     public class RejectDto
