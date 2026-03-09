@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
 using TelePsy.DAL.Repositories;
 using TelePsy.Domain.Entities;
+using TelePsy.Domain.Enums;
+using TelePsy.Domain.DTOs;
 
 namespace TelePsy.BLL.Services
 {
@@ -12,11 +14,13 @@ namespace TelePsy.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditService _auditService;
+        private readonly IInvoiceService _invoiceService;
 
-        public AdminService(IUnitOfWork unitOfWork, IAuditService auditService)
+        public AdminService(IUnitOfWork unitOfWork, IAuditService auditService, IInvoiceService invoiceService)
         {
             _unitOfWork = unitOfWork;
             _auditService = auditService;
+            _invoiceService = invoiceService;
         }
 
         public async Task<IEnumerable<Psychologist>> GetPendingPsychologistsAsync()
@@ -250,6 +254,65 @@ namespace TelePsy.BLL.Services
                 .ToList();
 
             return (pagedData, totalCount);
+        }
+
+        public async Task<IEnumerable<PaymentManagementDto>> GetPaymentManagementAsync()
+        {
+            var invoices = await _unitOfWork.Repository<Invoice>().GetAsync(
+                i => i.Type == InvoiceType.ClientPurchase && i.Status == InvoiceStatus.Paid,
+                includeProperties: "Patient.Person,Details,Details.Appointment,Details.Appointment.Psychologist.Person,Details.Appointment.Therapy"
+            );
+
+            var commissionRate = await _invoiceService.GetGlobalCommissionAsync();
+
+            var result = new List<PaymentManagementDto>();
+
+            foreach (var invoice in invoices)
+            {
+                foreach (var detail in invoice.Details)
+                {
+                    if (detail.Appointment == null) continue;
+
+                    var appt = detail.Appointment;
+                    var psychologist = appt.Psychologist;
+                    var therapistName = psychologist?.Person != null 
+                        ? $"{psychologist.Person.FirstName} {psychologist.Person.LastName}" 
+                        : "Unknown";
+
+                    decimal unitPrice = detail.UnitPrice;
+                    decimal commission = unitPrice * commissionRate;
+                    decimal psychoShare = unitPrice - commission;
+
+                    result.Add(new PaymentManagementDto
+                    {
+                        InvoiceId = invoice.Id,
+                        InvoiceNumber = invoice.InvoiceNumber,
+                        Date = invoice.IssueDate,
+                        PatientId = invoice.PatientId ?? 0,
+                        PatientName = invoice.Patient?.Person != null 
+                            ? $"{invoice.Patient.Person.FirstName} {invoice.Patient.Person.LastName}" 
+                            : "N/A",
+                        PsychologistId = appt.PsychologistId,
+                        PsychologistName = therapistName,
+                        ServiceName = appt.Therapy?.Name ?? "General Session",
+                        TotalAmount = unitPrice,
+                        PsychologistShare = psychoShare,
+                        PlatformCommission = commission,
+                        IsPaidToPsychologist = appt.PsychologistInvoiceId != null,
+                        AppointmentId = appt.Id
+                    });
+                }
+            }
+
+            return result.OrderByDescending(r => r.Date);
+        }
+
+        public async Task ProcessPsychologistPayoutAsync(PsychologistPayoutRequestDto request)
+        {
+            await _invoiceService.GeneratePsychologistPayoutAsync(request.PsychologistId, request.AppointmentIds);
+            
+            await _auditService.LogAsync("Admin", "Payout", "Invoice", 
+                request.PsychologistId.ToString(), $"Payout processed for {request.AppointmentIds.Count} appointments");
         }
     }
 }

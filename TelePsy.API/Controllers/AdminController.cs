@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
+using TelePsy.Domain.DTOs;
+using System.Linq;
 
 namespace TelePsy.API.Controllers
 {
@@ -213,6 +215,34 @@ namespace TelePsy.API.Controllers
                     Page = page,
                     PageSize = pageSize
                 });
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("payments")]
+        public async Task<IActionResult> GetPaymentManagement()
+        {
+            try
+            {
+                var payments = await _adminService.GetPaymentManagementAsync();
+                return Ok(payments);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("payments/payout")]
+        public async Task<IActionResult> ProcessPsychologistPayout([FromBody] PsychologistPayoutRequestDto request)
+        {
+            try
+            {
+                await _adminService.ProcessPsychologistPayoutAsync(request);
+                return Ok(new { Message = "Payout processed successfully" });
             }
             catch (System.Exception ex)
             {
