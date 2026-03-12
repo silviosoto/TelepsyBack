@@ -1,4 +1,3 @@
-using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,7 +6,6 @@ using TelePsy.BLL.Interfaces;
 using TelePsy.DAL.Repositories;
 using TelePsy.Domain.Entities;
 using TelePsy.Domain.Enums;
-using System.Linq;
 using System.Globalization;
 
 namespace TelePsy.BLL.Services
@@ -17,6 +15,7 @@ namespace TelePsy.BLL.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly IVideoService _videoService;
         private readonly string _merchantId;
         private readonly string _apiKey;
         private readonly string _accountId;
@@ -24,11 +23,12 @@ namespace TelePsy.BLL.Services
         private readonly string _responseUrl;
         private readonly string _confirmationUrl;
 
-        public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService)
+        public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IVideoService videoService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
             _emailService = emailService;
+            _videoService = videoService;
             _merchantId = _configuration["PayU:MerchantId"] ?? string.Empty;
             _apiKey = _configuration["PayU:ApiKey"] ?? string.Empty;
             _accountId = _configuration["PayU:AccountId"] ?? string.Empty;
@@ -40,7 +40,7 @@ namespace TelePsy.BLL.Services
 
         public async Task<string> CreatePaymentRequestAsync(int invoiceId)
         {
-            var invoice = (await _unitOfWork.Repository<TelePsy.Domain.Entities.Invoice>().GetAsync(
+            var invoice = (await _unitOfWork.Repository<Invoice>().GetAsync(
                 i => i.Id == invoiceId,
                 includeProperties: "Patient.Person.User,Details"
             )).FirstOrDefault();
@@ -61,14 +61,12 @@ namespace TelePsy.BLL.Services
                 merchantId = _merchantId,
                 accountId = _accountId,
                 description = $"Payment for Invoice {invoice.InvoiceNumber}",
-                referenceCode = referenceCode,
+                referenceCode,
                 amount = amount.ToString("F0", CultureInfo.InvariantCulture),
                 tax = 0,
                 taxReturnBase = 0,
-                currency = currency,
-                signature = signature,
                 test = 1, // Sandbox mode
-                buyerEmail = invoice.Patient?.Person?.User?.Email ?? "buyer@test.com",
+                buyerEmail = invoice.Patient.Person.User.Email ?? "buyer@test.com",
                 responseUrl = _responseUrl,
                 confirmationUrl = _confirmationUrl,
                 checkoutUrl = _checkoutUrl
@@ -153,6 +151,26 @@ namespace TelePsy.BLL.Services
                 if (appointment != null)
                 {
                     appointment.Status = AppointmentStatus.Confirmed;
+                    
+                    // Generate Zoom link if it's an online session
+                    try
+                    {
+                        var fullAppointment = (await _unitOfWork.Repository<Appointment>().GetAsync(
+                            a => a.Id == appointment.Id,
+                            includeProperties: "Patient.Person,Psychologist.Person.User,Therapy"
+                        )).FirstOrDefault();
+
+                        if (fullAppointment != null && string.IsNullOrEmpty(fullAppointment.VideoLink))
+                        {
+                            string zoomLink = await _videoService.GenerateMeetingLinkAsync(fullAppointment);
+                            appointment.VideoLink = zoomLink;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error generating Zoom link: {ex.Message}");
+                    }
+
                     _unitOfWork.Repository<Appointment>().Update(appointment);
 
                     // Send email notification to psychologist
