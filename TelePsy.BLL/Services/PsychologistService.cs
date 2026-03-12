@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
 using TelePsy.DAL.Repositories;
 using TelePsy.Domain.DTOs;
@@ -25,7 +20,7 @@ namespace TelePsy.BLL.Services
         {
             return (await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.Id == id,
-                includeProperties: "Person"
+                includeProperties: "Person,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
         }
 
@@ -33,15 +28,20 @@ namespace TelePsy.BLL.Services
         {
             return (await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.Person.UserId == userId,
-                includeProperties: "Person"
+                includeProperties: "Person,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
         }
 
         public async Task UpdateProfileAsync(int psychologistId, PsychologistProfileDto dto)
         {
-            var psychologist = await _unitOfWork.Repository<Psychologist>().GetByIdAsync(psychologistId);
+            var psychologist = (await _unitOfWork.Repository<Psychologist>().GetAsync(
+                p => p.Id == psychologistId,
+                includeProperties: "Person"
+            )).FirstOrDefault();
+
             if (psychologist == null) throw new Exception("Psychologist not found");
 
+            // Update Psychologist specific fields
             psychologist.LicenseNumber = dto.LicenseNumber;
             psychologist.Specialization = dto.Specialization;
             psychologist.University = dto.University;
@@ -49,6 +49,19 @@ namespace TelePsy.BLL.Services
             psychologist.SessionRate = dto.SessionRate;
             psychologist.Bio = dto.Bio;
             psychologist.Hobbies = dto.Hobbies;
+
+            // Update Person fields
+            if (psychologist.Person != null)
+            {
+                psychologist.Person.FirstName = dto.FirstName;
+                psychologist.Person.LastName = dto.LastName;
+                psychologist.Person.City = dto.City;
+                psychologist.Person.State = dto.State;
+                psychologist.Person.PhoneNumber = dto.PhoneNumber;
+                psychologist.Person.Gender = dto.Gender;
+                
+                _unitOfWork.Repository<Person>().Update(psychologist.Person);
+            }
 
             _unitOfWork.Repository<Psychologist>().Update(psychologist);
             await _unitOfWork.CompleteAsync();
@@ -65,7 +78,7 @@ namespace TelePsy.BLL.Services
         {
             return await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.IsVerified && p.IsActive,
-                includeProperties: "Person"
+                includeProperties: "Person,Therapies.Therapy,Specialties.Specialty"
             );
         }
 

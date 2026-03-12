@@ -158,6 +158,143 @@ namespace TelePsy.DAL.Context
                     await context.SaveChangesAsync();
                 }
             }
+
+            // Seed Locations
+            await SeedLocationsAsync(context);
+
+            // Seed Therapies and Specialties
+            await SeedTherapiesAsync(context);
+            await SeedSpecialtiesAsync(context);
+
+            // Ensure test psychologist is verified and has services
+            var john = context.Psychologists.FirstOrDefault(p => p.LicenseNumber == "PSY12345");
+            if (john != null)
+            {
+                john.IsVerified = true;
+                
+                // Add sample therapy if none
+                if (!context.PsychologistTherapies.Any(pt => pt.PsychologistId == john.Id))
+                {
+                    var therapy = context.Therapies.FirstOrDefault();
+                    if (therapy != null)
+                    {
+                        context.PsychologistTherapies.Add(new PsychologistTherapy 
+                        { 
+                            PsychologistId = john.Id, 
+                            TherapyId = therapy.Id, 
+                            Rate = 120000 
+                        });
+                    }
+                }
+
+                // Add sample specialty if none
+                if (!context.PsychologistSpecialties.Any(ps => ps.PsychologistId == john.Id))
+                {
+                    var specialty = context.Specialties.FirstOrDefault();
+                    if (specialty != null)
+                    {
+                        context.PsychologistSpecialties.Add(new PsychologistSpecialty 
+                        { 
+                            PsychologistId = john.Id, 
+                            SpecialtyId = specialty.Id, 
+                            IsActive = true 
+                        });
+                    }
+                }
+                
+                await context.SaveChangesAsync();
+            }
+        }
+
+        private static async Task SeedTherapiesAsync(AppDbContext context)
+        {
+            if (context.Therapies.Any()) return;
+
+            var therapies = new List<Therapy>
+            {
+                new Therapy { Name = "Terapia Individual", Description = "Sesión personalizada de 50 minutos." },
+                new Therapy { Name = "Terapia de Pareja", Description = "Enfoque en comunicación y resolución de conflictos." },
+                new Therapy { Name = "Terapia Infantil", Description = "Especializada para niños y adolescentes." },
+                new Therapy { Name = "Orientación Vocacional", Description = "Ayuda para elegir carrera y futuro profesional." }
+            };
+
+            context.Therapies.AddRange(therapies);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task SeedSpecialtiesAsync(AppDbContext context)
+        {
+            if (context.Specialties.Any()) return;
+
+            var specialties = new List<Specialty>
+            {
+                new Specialty { Name = "Ansiedad y Estrés", IsActive = true },
+                new Specialty { Name = "Depresión", IsActive = true },
+                new Specialty { Name = "Duelos", IsActive = true },
+                new Specialty { Name = "Trastornos de Personalidad", IsActive = true }
+            };
+
+            context.Specialties.AddRange(specialties);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task SeedLocationsAsync(AppDbContext context)
+        {
+            if (context.Departments.Any()) return;
+
+            var locations = new Dictionary<string, string[]>
+            {
+                { "Amazonas", new[] { "Leticia", "Puerto Nariño" } },
+                { "Antioquia", new[] { "Medellín", "Bello", "Itagüí", "Envigado", "Rionegro", "Apartadó" } },
+                { "Arauca", new[] { "Arauca", "Tame", "Saravena" } },
+                { "Atlántico", new[] { "Barranquilla", "Soledad", "Malambo", "Sabanalarga" } },
+                { "Bogotá D.C.", new[] { "Bogotá" } },
+                { "Bolívar", new[] { "Cartagena", "Magangué", "Turbaco" } },
+                { "Boyacá", new[] { "Tunja", "Duitama", "Sogamoso", "Chiquinquirá" } },
+                { "Caldas", new[] { "Manizales", "La Dorada", "Riosucio" } },
+                { "Caquetá", new[] { "Florencia", "San Vicente del Caguán" } },
+                { "Casanare", new[] { "Yopal", "Aguazul", "Paz de Ariporo" } },
+                { "Cauca", new[] { "Popayán", "Santander de Quilichao", "Puerto Tejada" } },
+                { "Cesar", new[] { "Valledupar", "Aguachica", "Agustín Codazzi" } },
+                { "Chocó", new[] { "Quibdó", "Istmina", "Condoto" } },
+                { "Córdoba", new[] { "Montería", "Cereté", "Sahagún", "Lorica" } },
+                { "Cundinamarca", new[] { "Soacha", "Fusagasugá", "Facatativá", "Chía", "Zipaquirá", "Girardot" } },
+                { "Guainía", new[] { "Inírida" } },
+                { "Guaviare", new[] { "San José del Guaviare" } },
+                { "Huila", new[] { "Neiva", "Pitalito", "Garzón" } },
+                { "La Guajira", new[] { "Riohacha", "Maicao", "Uribia" } },
+                { "Magdalena", new[] { "Santa Marta", "Ciénaga", "Fundación" } },
+                { "Meta", new[] { "Villavicencio", "Acacías", "Granada" } },
+                { "Nariño", new[] { "Pasto", "Tumaco", "Ipiales" } },
+                { "Norte de Santander", new[] { "Cúcuta", "Ocaña", "Villa del Rosario" } },
+                { "Putumayo", new[] { "Mocoa", "Puerto Asís", "Orito" } },
+                { "Quindío", new[] { "Armenia", "Calarcá", "La Tebaida" } },
+                { "Risaralda", new[] { "Pereira", "Dosquebradas", "Santa Rosa de Cabal" } },
+                { "San Andrés y Providencia", new[] { "San Andrés" } },
+                { "Santander", new[] { "Bucaramanga", "Floridablanca", "Girón", "Piedecuesta", "Barrancabermeja" } },
+                { "Sucre", new[] { "Sincelejo", "Corozal", "San Marcos" } },
+                { "Tolima", new[] { "Ibagué", "Espinal", "Melgar" } },
+                { "Valle del Cauca", new[] { "Cali", "Buenaventura", "Palmira", "Tuluá", "Cartago", "Buga" } },
+                { "Vaupés", new[] { "Mitú" } },
+                { "Vichada", new[] { "Puerto Carreño" } }
+            };
+
+            foreach (var loc in locations)
+            {
+                var department = new Department { Name = loc.Key };
+                context.Departments.Add(department);
+                await context.SaveChangesAsync();
+
+                foreach (var cityName in loc.Value)
+                {
+                    context.Cities.Add(new City 
+                    { 
+                        Name = cityName, 
+                        DepartmentId = department.Id 
+                    });
+                }
+            }
+            await context.SaveChangesAsync();
         }
     }
 }
