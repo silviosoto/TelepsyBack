@@ -28,6 +28,8 @@ namespace TelePsy.DAL.Context
         public DbSet<PsychologyNote> PsychologyNotes { get; set; }
         public DbSet<Specialty> Specialties { get; set; }
         public DbSet<PsychologistSpecialty> PsychologistSpecialties { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<City> Cities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
