@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using TelePsy.BLL.Interfaces;
@@ -101,11 +100,44 @@ namespace TelePsy.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("available-slots/{psychologistId}")]
+        public async Task<IActionResult> GetAvailableSlots(int psychologistId, [FromQuery] DateTime date)
+        {
+            try
+            {
+                var result = await _appointmentService.GetAvailableSlotsAsync(psychologistId, date);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPut("cancel/{id}")]
         public async Task<IActionResult> Cancel(int id)
         {
             await _appointmentService.CancelAppointmentAsync(id);
             return Ok();
         }
+
+        [HttpPut("reschedule/{id}")]
+        public async Task<IActionResult> Reschedule(int id, [FromBody] RescheduleDto dto)
+        {
+            try
+            {
+                await _appointmentService.RescheduleAppointmentAsync(id, dto.NewDate);
+                return Ok(new { message = "Cita reprogramada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+    }
+
+    public class RescheduleDto 
+    {
+        public DateTime NewDate { get; set; }
     }
 }

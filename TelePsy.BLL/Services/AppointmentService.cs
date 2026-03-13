@@ -95,6 +95,37 @@ namespace TelePsy.BLL.Services
             }
         }
 
+        public async Task RescheduleAppointmentAsync(int appointmentId, DateTime newDate)
+        {
+            var appointment = await _unitOfWork.Repository<Appointment>().GetByIdAsync(appointmentId);
+            if (appointment == null) throw new Exception("Appointment not found");
+
+            // Validation: Max 1 month from original date
+            var limitDate = appointment.ScheduledTime.AddMonths(1);
+            if (newDate > limitDate)
+            {
+                throw new Exception("La nueva fecha no puede ser superior a un mes de la fecha original.");
+            }
+
+            if (newDate < DateTime.UtcNow)
+            {
+                throw new Exception("La nueva fecha debe ser en el futuro.");
+            }
+
+            appointment.ScheduledTime = newDate;
+            
+            // If the appointment was already confirmed (paid), keep it confirmed.
+            // Only move to Pending if it's a new or previously pending appointment.
+            // This prevents "paid" sessions from asking for payment again after rescheduling.
+            if (appointment.Status != AppointmentStatus.Confirmed && appointment.Status != AppointmentStatus.Completed)
+            {
+                appointment.Status = AppointmentStatus.Pending;
+            }
+            
+            _unitOfWork.Repository<Appointment>().Update(appointment);
+            await _unitOfWork.CompleteAsync();
+        }
+
         public async Task<IEnumerable<WorkScheduleDto>> GetWorkScheduleAsync(int psychologistId)
         {
             var schedule = await _unitOfWork.Repository<WorkSchedule>().GetAsync(w => w.PsychologistId == psychologistId);
@@ -147,7 +178,9 @@ namespace TelePsy.BLL.Services
                 var currentTime = schedule.StartTime;
                 while (currentTime.Add(TimeSpan.FromMinutes(durationMinutes)) <= schedule.EndTime)
                 {
-                    var slotStart = date.Date.Add(currentTime);
+                    // Create date-time from parts and convert to UTC based on server's timezone
+                    // This ensures consistency with the rest of the UTC-based system
+                    var slotStart = date.Date.Add(currentTime).ToUniversalTime();
                     var slotEnd = slotStart.AddMinutes(durationMinutes);
 
                     // Check if slot is blocked
