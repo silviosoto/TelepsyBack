@@ -2,6 +2,8 @@ using TelePsy.BLL.Interfaces;
 using TelePsy.DAL.Repositories;
 using TelePsy.Domain.DTOs;
 using TelePsy.Domain.Entities;
+using TelePsy.Domain.Enums;
+using System.Linq;
 
 namespace TelePsy.BLL.Services
 {
@@ -20,7 +22,7 @@ namespace TelePsy.BLL.Services
         {
             return (await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.Id == id,
-                includeProperties: "Person,Therapies.Therapy,Specialties.Specialty"
+                includeProperties: "Person.User,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
         }
 
@@ -28,7 +30,7 @@ namespace TelePsy.BLL.Services
         {
             return (await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.Person.UserId == userId,
-                includeProperties: "Person,Therapies.Therapy,Specialties.Specialty"
+                includeProperties: "Person.User,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
         }
 
@@ -272,6 +274,50 @@ namespace TelePsy.BLL.Services
             }
 
             await _unitOfWork.CompleteAsync();
+        }
+        public async Task<ProductivityReportResponseDto> GetProductivityReportAsync(int psychologistId, DateTime? startDate, DateTime? endDate)
+        {
+            var appointments = await _unitOfWork.Repository<Appointment>().GetAsync(
+                a => a.PsychologistId == psychologistId && 
+                     (a.Status == AppointmentStatus.Completed || a.Status == AppointmentStatus.Confirmed || a.Status == AppointmentStatus.NoShow),
+                includeProperties: "Patient.Person,Therapy"
+            );
+
+            if (startDate.HasValue)
+            {
+                appointments = appointments.Where(a => a.ScheduledTime >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                appointments = appointments.Where(a => a.ScheduledTime <= endDate.Value);
+            }
+
+            var reportItems = appointments.Select(a => {
+                var gross = a.Rate;
+                var commission = gross * 0.30m;
+                var net = gross - commission;
+
+                return new PsychologistProductivityDto
+                {
+                    AppointmentId = a.Id,
+                    Date = a.ScheduledTime,
+                    PatientName = a.Patient?.Person != null ? $"{a.Patient.Person.FirstName} {a.Patient.Person.LastName}".Trim() : "Unknown",
+                    TherapyName = a.Therapy?.Name ?? "General Session",
+                    GrossAmount = gross,
+                    Commission = commission,
+                    NetAmount = net,
+                    Status = a.Status.ToString()
+                };
+            }).OrderByDescending(i => i.Date).ToList();
+
+            return new ProductivityReportResponseDto
+            {
+                Items = reportItems,
+                TotalGross = reportItems.Sum(i => i.GrossAmount),
+                TotalCommission = reportItems.Sum(i => i.Commission),
+                TotalNet = reportItems.Sum(i => i.NetAmount),
+                TotalSessions = reportItems.Count()
+            };
         }
     }
 }

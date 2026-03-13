@@ -24,5 +24,6 @@ namespace TelePsy.BLL.Interfaces
         Task<IEnumerable<SpecialtyDto>> GetAvailableSpecialtiesAsync(string? searchQuery = null, int? limit = null);
         Task<IEnumerable<SpecialtyDto>> GetPsychologistSpecialtiesAsync(int psychologistId);
         Task UpdatePsychologistSpecialtyAsync(int psychologistId, UpdatePsychologistSpecialtyDto dto);
+        Task<ProductivityReportResponseDto> GetProductivityReportAsync(int psychologistId, DateTime? startDate, DateTime? endDate);
     }
 }

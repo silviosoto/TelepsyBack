@@ -186,5 +186,12 @@ namespace TelePsy.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("{id}/productivity-report")]
+        [Authorize(Roles = "Psychologist")]
+        public async Task<IActionResult> GetProductivityReport(int id, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            var report = await _psychologistService.GetProductivityReportAsync(id, startDate, endDate);
+            return Ok(report);
+        }
     }
 }
