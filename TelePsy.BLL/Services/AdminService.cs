@@ -256,15 +256,29 @@ namespace TelePsy.BLL.Services
             return (pagedData, totalCount);
         }
 
-        public async Task<IEnumerable<PaymentManagementDto>> GetPaymentManagementAsync()
+        public async Task<IEnumerable<PaymentManagementDto>> GetPaymentManagementAsync(int? psychologistId = null, int? patientId = null, DateTime? startDate = null, DateTime? endDate = null)
         {
             var invoices = await _unitOfWork.Repository<Invoice>().GetAsync(
                 i => i.Type == InvoiceType.ClientPurchase && i.Status == InvoiceStatus.Paid,
                 includeProperties: "Patient.Person,Details,Details.Appointment,Details.Appointment.Psychologist.Person,Details.Appointment.Therapy"
             );
 
-            var commissionRate = await _invoiceService.GetGlobalCommissionAsync();
+            if (patientId.HasValue)
+            {
+                invoices = invoices.Where(i => i.PatientId == patientId.Value);
+            }
 
+            if (startDate.HasValue)
+            {
+                invoices = invoices.Where(i => i.IssueDate.Date >= startDate.Value.Date);
+            }
+
+            if (endDate.HasValue)
+            {
+                invoices = invoices.Where(i => i.IssueDate.Date <= endDate.Value.Date);
+            }
+
+            var commissionRate = await _invoiceService.GetGlobalCommissionAsync();
             var result = new List<PaymentManagementDto>();
 
             foreach (var invoice in invoices)
@@ -274,6 +288,12 @@ namespace TelePsy.BLL.Services
                     if (detail.Appointment == null) continue;
 
                     var appt = detail.Appointment;
+                    
+                    if (psychologistId.HasValue && appt.PsychologistId != psychologistId.Value)
+                    {
+                        continue;
+                    }
+
                     var psychologist = appt.Psychologist;
                     var therapistName = psychologist?.Person != null 
                         ? $"{psychologist.Person.FirstName} {psychologist.Person.LastName}" 
@@ -299,6 +319,8 @@ namespace TelePsy.BLL.Services
                         PsychologistShare = psychoShare,
                         PlatformCommission = commission,
                         IsPaidToPsychologist = appt.PsychologistInvoiceId != null,
+                        PatientAttended = appt.PatientJoinedAt.HasValue,
+                        PsychologistAttended = appt.PsychologistJoinedAt.HasValue,
                         AppointmentId = appt.Id
                     });
                 }

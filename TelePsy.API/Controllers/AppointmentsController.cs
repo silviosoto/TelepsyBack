@@ -134,6 +134,25 @@ namespace TelePsy.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("{id}/join")]
+        public async Task<IActionResult> Join(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var role = User.FindFirstValue(ClaimTypes.Role);
+                var link = await _appointmentService.JoinAppointmentAsync(id, userId, role ?? "");
+                
+                return Ok(new { link });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 
     public class RescheduleDto 

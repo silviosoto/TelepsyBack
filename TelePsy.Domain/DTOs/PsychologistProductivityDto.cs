@@ -12,6 +12,8 @@ namespace TelePsy.Domain.DTOs
         public decimal Commission { get; set; }
         public decimal NetAmount { get; set; }
         public string Status { get; set; } = string.Empty;
+        public bool PatientAttended { get; set; }
+        public bool PsychologistAttended { get; set; }
     }
 
     public class ProductivityReportResponseDto

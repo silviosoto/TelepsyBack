@@ -27,5 +27,6 @@ namespace TelePsy.BLL.Interfaces
         // Booking Flow
         Task<BookingResponseDto> InitiateBookingAsync(string userId, InitiateBookingDto dto);
         Task<CheckoutSummaryDto> GetCheckoutSummaryAsync(int appointmentId);
+        Task<string> JoinAppointmentAsync(int appointmentId, string userId, string role);
     }
 }

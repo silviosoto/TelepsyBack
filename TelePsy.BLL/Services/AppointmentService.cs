@@ -14,10 +14,12 @@ namespace TelePsy.BLL.Services
     public class AppointmentService : IAppointmentService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailService _emailService;
 
-        public AppointmentService(IUnitOfWork unitOfWork)
+        public AppointmentService(IUnitOfWork unitOfWork, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
+            _emailService = emailService;
         }
 
         public async Task<Appointment> CreateAppointmentAsync(Appointment appointment)
@@ -86,18 +88,36 @@ namespace TelePsy.BLL.Services
 
         public async Task CancelAppointmentAsync(int appointmentId)
         {
-            var appointment = await _unitOfWork.Repository<Appointment>().GetByIdAsync(appointmentId);
+            var appointment = await _unitOfWork.Repository<Appointment>().GetFirstOrDefaultAsync(
+                a => a.Id == appointmentId,
+                includeProperties: "Patient.Person.User,Psychologist.Person.User"
+            );
+
             if (appointment is not null)
             {
                 appointment.Status = AppointmentStatus.Cancelled;
                 _unitOfWork.Repository<Appointment>().Update(appointment);
                 await _unitOfWork.CompleteAsync();
+
+                try
+                {
+                    // Generic notification, logic deciding recipient is in EmailService
+                    await _emailService.SendAppointmentChangeNotificationAsync(appointment, "Cita Cancelada", "System");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error sending cancellation email: {ex.Message}");
+                }
             }
         }
 
         public async Task RescheduleAppointmentAsync(int appointmentId, DateTime newDate)
         {
-            var appointment = await _unitOfWork.Repository<Appointment>().GetByIdAsync(appointmentId);
+            var appointment = await _unitOfWork.Repository<Appointment>().GetFirstOrDefaultAsync(
+                a => a.Id == appointmentId,
+                includeProperties: "Patient.Person.User,Psychologist.Person.User"
+            );
+
             if (appointment == null) throw new Exception("Appointment not found");
 
             // Validation: Max 1 month from original date
@@ -116,7 +136,6 @@ namespace TelePsy.BLL.Services
             
             // If the appointment was already confirmed (paid), keep it confirmed.
             // Only move to Pending if it's a new or previously pending appointment.
-            // This prevents "paid" sessions from asking for payment again after rescheduling.
             if (appointment.Status != AppointmentStatus.Confirmed && appointment.Status != AppointmentStatus.Completed)
             {
                 appointment.Status = AppointmentStatus.Pending;
@@ -124,6 +143,15 @@ namespace TelePsy.BLL.Services
             
             _unitOfWork.Repository<Appointment>().Update(appointment);
             await _unitOfWork.CompleteAsync();
+
+            try
+            {
+                await _emailService.SendAppointmentChangeNotificationAsync(appointment, "Cita Reagendada", "System");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending reschedule email: {ex.Message}");
+            }
         }
 
         public async Task<IEnumerable<WorkScheduleDto>> GetWorkScheduleAsync(int psychologistId)
@@ -349,6 +377,26 @@ namespace TelePsy.BLL.Services
                 ScheduledTime = appointment.ScheduledTime,
                 Amount = appointment.Rate
             };
+        }
+
+        public async Task<string> JoinAppointmentAsync(int appointmentId, string userId, string role)
+        {
+            var appointment = await _unitOfWork.Repository<Appointment>().GetByIdAsync(appointmentId);
+            if (appointment == null) throw new Exception("Appointment not found");
+
+            if (role == "Patient")
+            {
+                appointment.PatientJoinedAt = DateTime.UtcNow;
+            }
+            else if (role == "Psychologist")
+            {
+                appointment.PsychologistJoinedAt = DateTime.UtcNow;
+            }
+
+            _unitOfWork.Repository<Appointment>().Update(appointment);
+            await _unitOfWork.CompleteAsync();
+
+            return appointment.VideoLink;
         }
     }
 }

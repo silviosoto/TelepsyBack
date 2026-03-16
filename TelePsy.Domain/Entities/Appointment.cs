@@ -24,6 +24,9 @@ namespace TelePsy.Domain.Entities
 
         public string VideoLink { get; set; }
 
+        public DateTime? PatientJoinedAt { get; set; }
+        public DateTime? PsychologistJoinedAt { get; set; }
+
         public int? PaymentId { get; set; }
         public Payment Payment { get; set; }
 

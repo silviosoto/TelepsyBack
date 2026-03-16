@@ -306,7 +306,9 @@ namespace TelePsy.BLL.Services
                     GrossAmount = gross,
                     Commission = commission,
                     NetAmount = net,
-                    Status = a.Status.ToString()
+                    Status = a.Status.ToString(),
+                    PatientAttended = a.PatientJoinedAt.HasValue,
+                    PsychologistAttended = a.PsychologistJoinedAt.HasValue
                 };
             }).OrderByDescending(i => i.Date).ToList();
 

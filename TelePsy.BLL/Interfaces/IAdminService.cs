@@ -16,7 +16,7 @@ namespace TelePsy.BLL.Interfaces
         Task<Psychologist?> GetPsychologistDetailsAsync(int id);
         Task<(IEnumerable<Appointment> Appointments, int TotalCount)> GetPsychologistAppointmentsAsync(int psychologistId, int page, int pageSize, string? searchTerm, DateTime? startDate, DateTime? endDate);
         Task<(IEnumerable<Payment> Payments, int TotalCount)> GetPsychologistPaymentsAsync(int psychologistId, int page = 1, int pageSize = 10, string? searchTerm = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null);
-        Task<IEnumerable<PaymentManagementDto>> GetPaymentManagementAsync();
+        Task<IEnumerable<PaymentManagementDto>> GetPaymentManagementAsync(int? psychologistId = null, int? patientId = null, DateTime? startDate = null, DateTime? endDate = null);
         Task ProcessPsychologistPayoutAsync(PsychologistPayoutRequestDto request);
     }
 }
