@@ -184,6 +184,7 @@ namespace TelePsy.BLL.Services
                         if (fullAppointment != null)
                         {
                             await _emailService.SendAppointmentNotificationAsync(fullAppointment);
+                            await _emailService.SendPaymentConfirmationAsync(fullAppointment);
                         }
                     }
                     catch (Exception ex)

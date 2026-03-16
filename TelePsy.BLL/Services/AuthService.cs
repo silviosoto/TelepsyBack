@@ -22,15 +22,18 @@ namespace TelePsy.BLL.Services
         private readonly IConfiguration _configuration;
         private readonly TelePsy.DAL.Repositories.IUnitOfWork _unitOfWork;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IEmailService _emailService;
 
         public AuthService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration, TelePsy.DAL.Repositories.IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+            IConfiguration configuration, TelePsy.DAL.Repositories.IUnitOfWork unitOfWork, 
+            IFileStorageService fileStorageService, IEmailService emailService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _unitOfWork = unitOfWork;
             _fileStorageService = fileStorageService;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto model, Microsoft.AspNetCore.Http.IFormFile? cvFile = null)
@@ -115,6 +118,16 @@ namespace TelePsy.BLL.Services
 
             await _unitOfWork.CompleteAsync();
 
+            try
+            {
+                await _emailService.SendWelcomeEmailAsync(user, model.FirstName);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail registration
+                Console.WriteLine($"Error sending welcome email: {ex.Message}");
+            }
+
             return await GenerateJwtToken(user);
         }
 
@@ -173,6 +186,16 @@ namespace TelePsy.BLL.Services
                 var patient = new Patient { PersonId = person.Id, IsActive = true };
                 await _unitOfWork.Repository<Patient>().AddAsync(patient);
                 await _unitOfWork.CompleteAsync();
+
+                try
+                {
+                    await _emailService.SendWelcomeEmailAsync(user, payload.GivenName);
+                }
+                catch (Exception ex)
+                {
+                    // Log error but don't fail registration
+                    Console.WriteLine($"Error sending welcome email: {ex.Message}");
+                }
             }
 
             return await GenerateJwtToken(user);

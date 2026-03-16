@@ -17,6 +17,8 @@ namespace TelePsy.Domain.DTOs
         public decimal PsychologistShare { get; set; } // What the psychologist earns
         public decimal PlatformCommission { get; set; } // Platform's cut
         public bool IsPaidToPsychologist { get; set; }
+        public bool PatientAttended { get; set; }
+        public bool PsychologistAttended { get; set; }
         public int AppointmentId { get; set; }
     }
 

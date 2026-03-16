@@ -223,11 +223,11 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpGet("payments")]
-        public async Task<IActionResult> GetPaymentManagement()
+        public async Task<IActionResult> GetPaymentManagement([FromQuery] int? psychologistId = null, [FromQuery] int? patientId = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
             {
-                var payments = await _adminService.GetPaymentManagementAsync();
+                var payments = await _adminService.GetPaymentManagementAsync(psychologistId, patientId, startDate, endDate);
                 return Ok(payments);
             }
             catch (System.Exception ex)
