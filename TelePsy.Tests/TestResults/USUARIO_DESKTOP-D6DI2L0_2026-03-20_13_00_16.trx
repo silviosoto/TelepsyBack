@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="48778790-25e9-4ae9-bf33-f8ae9f67ea96" name="USUARIO@DESKTOP-D6DI2L0 2026-03-20 13:00:16" runUser="DESKTOP-D6DI2L0\USUARIO" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-03-20T13:00:16.8126415-05:00" queuing="2026-03-20T13:00:16.8126419-05:00" start="2026-03-20T13:00:15.3981777-05:00" finish="2026-03-20T13:00:16.8442712-05:00" />
+  <TestSettings name="default" id="6bd8fd96-c428-4ba5-b6d0-a70e8dce9429">
+    <Deployment runDeploymentRoot="USUARIO_DESKTOP-D6DI2L0_2026-03-20_13_00_16" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="a6f81859-055f-4075-b789-0009dd7ed0e6" testId="cac24861-74a9-177c-ff4d-ef476baf4051" testName="TelePsy.Tests.Services.AppointmentServiceTests.CreateAppointmentAsync_WithInvalidTherapy_ThrowsException" computerName="DESKTOP-D6DI2L0" duration="00:00:00.0349259" startTime="2026-03-20T13:00:16.5889860-05:00" endTime="2026-03-20T13:00:16.6136438-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a6f81859-055f-4075-b789-0009dd7ed0e6" />
+    <UnitTestResult executionId="55138573-cef7-406e-86c1-c02f88a812c4" testId="ff8210a5-798a-5955-1ad9-e32f0c20b68e" testName="TelePsy.Tests.Services.InvoiceServiceTests.GeneratePatientInvoiceAsync_ValidPayment_CreatesInvoiceAndLinksToPayment" computerName="DESKTOP-D6DI2L0" duration="00:00:00.1611364" startTime="2026-03-20T13:00:16.3943278-05:00" endTime="2026-03-20T13:00:16.5749873-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="55138573-cef7-406e-86c1-c02f88a812c4" />
+    <UnitTestResult executionId="2d2b6d41-e571-41a5-b3b4-171de2b361e1" testId="dbf7c7e3-5d75-5bea-42ba-9571607df473" testName="TelePsy.Tests.Services.AppointmentServiceTests.CancelAppointmentAsync_WithExistingAppointment_UpdatesStatusAndSendsEmail" computerName="DESKTOP-D6DI2L0" duration="00:00:00.0053838" startTime="2026-03-20T13:00:16.6327940-05:00" endTime="2026-03-20T13:00:16.6381051-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2d2b6d41-e571-41a5-b3b4-171de2b361e1" />
+    <UnitTestResult executionId="b0f8619d-bb9f-4e31-840b-20c8bdaa3eaf" testId="b1e859a6-6f88-6b6c-b686-8a515c8966c5" testName="TelePsy.Tests.Services.AppointmentServiceTests.RescheduleAppointmentAsync_WithDateInMoreThanOneMonth_ThrowsException" computerName="DESKTOP-D6DI2L0" duration="00:00:00.0059042" startTime="2026-03-20T13:00:16.6139078-05:00" endTime="2026-03-20T13:00:16.6157493-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b0f8619d-bb9f-4e31-840b-20c8bdaa3eaf" />
+    <UnitTestResult executionId="e1cc8724-d7ae-483a-bb03-f7e36fa5a2fc" testId="c2bf642c-955e-01fa-3af7-9c10ba389e25" testName="TelePsy.Tests.Services.InvoiceServiceTests.GeneratePsychologistPayoutAsync_ValidAppointments_CalculatesCorrectPayout" computerName="DESKTOP-D6DI2L0" duration="00:00:00.0179505" startTime="2026-03-20T13:00:16.5890226-05:00" endTime="2026-03-20T13:00:16.6014002-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e1cc8724-d7ae-483a-bb03-f7e36fa5a2fc">
+      <Output>
+        <ErrorInfo>
+          <Message>System.Exception : One or more appointments not found or do not belong to psychologist</Message>
+          <StackTrace>   at TelePsy.BLL.Services.InvoiceService.GeneratePsychologistPayoutAsync(Int32 psychologistId, List`1 appointmentIds) in c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.BLL\Services\InvoiceService.cs:line 75&#xD;
+   at TelePsy.Tests.Services.InvoiceServiceTests.GeneratePsychologistPayoutAsync_ValidAppointments_CalculatesCorrectPayout() in c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\Services\InvoiceServiceTests.cs:line 104&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d6b106ea-96fd-4e6d-b105-abfd57952017" testId="274bb092-028c-fa63-3282-97e4b4ebd76c" testName="TelePsy.Tests.Services.AppointmentServiceTests.InitiateBookingAsync_ValidInputs_CreatesAppointmentInvoiceAndDetail" computerName="DESKTOP-D6DI2L0" duration="00:00:00.0238809" startTime="2026-03-20T13:00:16.6160242-05:00" endTime="2026-03-20T13:00:16.6325344-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d6b106ea-96fd-4e6d-b105-abfd57952017" />
+    <UnitTestResult executionId="bee0dbc5-c355-4786-8043-ef1427621f38" testId="577929cd-b64d-3c78-5104-de05647b88c6" testName="TelePsy.Tests.Services.AppointmentServiceTests.CreateAppointmentAsync_WithValidTherapy_SetsRateFromTherapy" computerName="DESKTOP-D6DI2L0" duration="00:00:00.1662419" startTime="2026-03-20T13:00:16.3967234-05:00" endTime="2026-03-20T13:00:16.5670877-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bee0dbc5-c355-4786-8043-ef1427621f38" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="TelePsy.Tests.Services.AppointmentServiceTests.RescheduleAppointmentAsync_WithDateInMoreThanOneMonth_ThrowsException" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="b1e859a6-6f88-6b6c-b686-8a515c8966c5">
+      <Execution id="b0f8619d-bb9f-4e31-840b-20c8bdaa3eaf" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.AppointmentServiceTests" name="RescheduleAppointmentAsync_WithDateInMoreThanOneMonth_ThrowsException" />
+    </UnitTest>
+    <UnitTest name="TelePsy.Tests.Services.InvoiceServiceTests.GeneratePsychologistPayoutAsync_ValidAppointments_CalculatesCorrectPayout" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="c2bf642c-955e-01fa-3af7-9c10ba389e25">
+      <Execution id="e1cc8724-d7ae-483a-bb03-f7e36fa5a2fc" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.InvoiceServiceTests" name="GeneratePsychologistPayoutAsync_ValidAppointments_CalculatesCorrectPayout" />
+    </UnitTest>
+    <UnitTest name="TelePsy.Tests.Services.AppointmentServiceTests.CreateAppointmentAsync_WithValidTherapy_SetsRateFromTherapy" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="577929cd-b64d-3c78-5104-de05647b88c6">
+      <Execution id="bee0dbc5-c355-4786-8043-ef1427621f38" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.AppointmentServiceTests" name="CreateAppointmentAsync_WithValidTherapy_SetsRateFromTherapy" />
+    </UnitTest>
+    <UnitTest name="TelePsy.Tests.Services.InvoiceServiceTests.GeneratePatientInvoiceAsync_ValidPayment_CreatesInvoiceAndLinksToPayment" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="ff8210a5-798a-5955-1ad9-e32f0c20b68e">
+      <Execution id="55138573-cef7-406e-86c1-c02f88a812c4" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.InvoiceServiceTests" name="GeneratePatientInvoiceAsync_ValidPayment_CreatesInvoiceAndLinksToPayment" />
+    </UnitTest>
+    <UnitTest name="TelePsy.Tests.Services.AppointmentServiceTests.CreateAppointmentAsync_WithInvalidTherapy_ThrowsException" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="cac24861-74a9-177c-ff4d-ef476baf4051">
+      <Execution id="a6f81859-055f-4075-b789-0009dd7ed0e6" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.AppointmentServiceTests" name="CreateAppointmentAsync_WithInvalidTherapy_ThrowsException" />
+    </UnitTest>
+    <UnitTest name="TelePsy.Tests.Services.AppointmentServiceTests.CancelAppointmentAsync_WithExistingAppointment_UpdatesStatusAndSendsEmail" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="dbf7c7e3-5d75-5bea-42ba-9571607df473">
+      <Execution id="2d2b6d41-e571-41a5-b3b4-171de2b361e1" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.AppointmentServiceTests" name="CancelAppointmentAsync_WithExistingAppointment_UpdatesStatusAndSendsEmail" />
+    </UnitTest>
+    <UnitTest name="TelePsy.Tests.Services.AppointmentServiceTests.InitiateBookingAsync_ValidInputs_CreatesAppointmentInvoiceAndDetail" storage="c:\users\usuario\onedrive\documentos\personal\ideas\telepsy\back\telepsyback\telepsy.tests\bin\debug\net10.0\telepsy.tests.dll" id="274bb092-028c-fa63-3282-97e4b4ebd76c">
+      <Execution id="d6b106ea-96fd-4e6d-b105-abfd57952017" />
+      <TestMethod codeBase="c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\bin\Debug\net10.0\TelePsy.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TelePsy.Tests.Services.AppointmentServiceTests" name="InitiateBookingAsync_ValidInputs_CreatesAppointmentInvoiceAndDetail" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="cac24861-74a9-177c-ff4d-ef476baf4051" executionId="a6f81859-055f-4075-b789-0009dd7ed0e6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ff8210a5-798a-5955-1ad9-e32f0c20b68e" executionId="55138573-cef7-406e-86c1-c02f88a812c4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dbf7c7e3-5d75-5bea-42ba-9571607df473" executionId="2d2b6d41-e571-41a5-b3b4-171de2b361e1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b1e859a6-6f88-6b6c-b686-8a515c8966c5" executionId="b0f8619d-bb9f-4e31-840b-20c8bdaa3eaf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c2bf642c-955e-01fa-3af7-9c10ba389e25" executionId="e1cc8724-d7ae-483a-bb03-f7e36fa5a2fc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="274bb092-028c-fa63-3282-97e4b4ebd76c" executionId="d6b106ea-96fd-4e6d-b105-abfd57952017" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="577929cd-b64d-3c78-5104-de05647b88c6" executionId="bee0dbc5-c355-4786-8043-ef1427621f38" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="7" executed="7" passed="6" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.4+50e68bbb8b (64-bit .NET 10.0.3)&#xD;
+[xUnit.net 00:00:00.15]   Discovering: TelePsy.Tests&#xD;
+[xUnit.net 00:00:00.22]   Discovered:  TelePsy.Tests&#xD;
+[xUnit.net 00:00:00.26]   Starting:    TelePsy.Tests&#xD;
+     Warning:&#xD;
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and&#xD;
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for&#xD;
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.&#xD;
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.&#xD;
+     A paid commercial license supports the development and continued increasing support of&#xD;
+     Fluent Assertions users under both commercial and community licenses. Help us&#xD;
+     keep Fluent Assertions at the forefront of unit testing.&#xD;
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/&#xD;
+[xUnit.net 00:00:00.52]       System.Exception : One or more appointments not found or do not belong to psychologist&#xD;
+[xUnit.net 00:00:00.52]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.52]         c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.BLL\Services\InvoiceService.cs(75,0): at TelePsy.BLL.Services.InvoiceService.GeneratePsychologistPayoutAsync(Int32 psychologistId, List`1 appointmentIds)&#xD;
+[xUnit.net 00:00:00.52]         c:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsy.Tests\Services\InvoiceServiceTests.cs(104,0): at TelePsy.Tests.Services.InvoiceServiceTests.GeneratePsychologistPayoutAsync_ValidAppointments_CalculatesCorrectPayout()&#xD;
+[xUnit.net 00:00:00.52]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.55]   Finished:    TelePsy.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-D6DI2L0" outcome="Error" timestamp="2026-03-20T13:00:16.6060913-05:00">
+        <Text>[xUnit.net 00:00:00.52]     TelePsy.Tests.Services.InvoiceServiceTests.GeneratePsychologistPayoutAsync_ValidAppointments_CalculatesCorrectPayout [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

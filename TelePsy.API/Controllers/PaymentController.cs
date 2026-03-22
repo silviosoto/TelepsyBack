@@ -68,27 +68,32 @@ namespace TelePsy.API.Controllers
                 bool processResult = await _paymentService.ProcessPaymentConfirmationAsync(data);
                 Console.WriteLine($"Process Result: {processResult}");
                 
+                if (!processResult)
+                {
+                    return BadRequest(new { message = "Payment confirmation failed processing (e.g. invalid signature or missing record)." });
+                }
+
                 return Ok();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Webhook processing error: {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
-                return Ok(); 
+                return StatusCode(500); 
             }
         }
     }
 
     public class PayUWebhookRequest
     {
-        public string merchant_id { get; set; }
-        public string state_pol { get; set; }
-        public string reference_sale { get; set; }
-        public string reference_pol { get; set; }
-        public string sign { get; set; }
-        public string value { get; set; }
-        public string currency { get; set; }
-        public string transaction_id { get; set; }
-        public string response_message_pol { get; set; }
+        public string? merchant_id { get; set; }
+        public string? state_pol { get; set; }
+        public string? reference_sale { get; set; }
+        public string? reference_pol { get; set; }
+        public string? sign { get; set; }
+        public string? value { get; set; }
+        public string? currency { get; set; }
+        public string? transaction_id { get; set; }
+        public string? response_message_pol { get; set; }
     }
 }

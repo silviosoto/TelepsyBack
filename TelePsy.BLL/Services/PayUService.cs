@@ -122,16 +122,28 @@ namespace TelePsy.BLL.Services
                 GenerateConfirmationSignature(data.ReferenceCode, data.Amount,
                     data.Currency, data.State);
 
-            // Note: PayU signatures are usually compared case-insensitively or they send them in a specific case.
+            // Note: PayU signatures are usually compared case-insensitively.
             if (!string.Equals(expectedSignature, data.Signature, StringComparison.OrdinalIgnoreCase))
             {
-                // In production, we should log this as a potential security issue
-                // return false; 
+                Console.WriteLine($"Invalid Signature. Expected: {expectedSignature}, Received: {data.Signature}");
+                return false; 
             }
 
             var payment = (await _unitOfWork.Repository<Payment>().GetAsync(p => p.TransactionId == data.ReferenceCode))
                 .FirstOrDefault();
-            if (payment == null) return false;
+            
+            if (payment == null)
+            {
+                Console.WriteLine($"Payment with reference {data.ReferenceCode} not found.");
+                return false;
+            }
+
+            // IDEMPOTENCY: If payment is already completed or failed, don't process again
+            if (payment.Status == "Completed" || payment.Status == "Failed")
+            {
+                Console.WriteLine($"Payment {data.ReferenceCode} already processed with status: {payment.Status}. Skipping.");
+                return true; // Return true because we already did the work, PayU should stop retrying
+            }
 
             if (data.State == 4) // Approved
             {
