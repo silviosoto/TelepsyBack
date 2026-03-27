@@ -7,7 +7,6 @@ using System.Text;
 using TelePsy.BLL.Interfaces;
 using TelePsy.BLL.Services;
 using TelePsy.DAL.Context;
-using TelePsy.DAL.Repositories;
 using TelePsy.Domain.Entities;
 using FluentValidation;
 using FluentValidation.AspNetCore;
