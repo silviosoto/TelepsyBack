@@ -68,6 +68,22 @@ namespace TelePsy.API.Controllers
             return Ok();
         }
 
+        [HttpGet("packages/discounts")]
+        public async Task<IActionResult> GetPackageDiscounts()
+        {
+            var discounts = await _adminService.GetPackageDiscountsAsync();
+            return Ok(discounts.Select(k => new { Sessions = k.Key, DiscountPercentage = k.Value }));
+        }
+
+        [HttpPut("packages/discounts")]
+        public async Task<IActionResult> UpdatePackageDiscounts([FromBody] System.Collections.Generic.List<PackageDiscountDto> dto)
+        {
+            if (dto == null || !dto.Any()) return BadRequest("Invalid discount data");
+            var dict = dto.ToDictionary(x => x.Sessions, x => x.DiscountPercentage);
+            await _adminService.UpdatePackageDiscountsAsync(dict);
+            return Ok();
+        }
+
         [HttpGet("patients")]
         public async Task<IActionResult> GetPatients([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] System.DateTime? date = null)
         {
@@ -259,5 +275,11 @@ namespace TelePsy.API.Controllers
     public class CommissionDto
     {
         public decimal Rate { get; set; }
+    }
+
+    public class PackageDiscountDto
+    {
+        public int Sessions { get; set; }
+        public decimal DiscountPercentage { get; set; }
     }
 }

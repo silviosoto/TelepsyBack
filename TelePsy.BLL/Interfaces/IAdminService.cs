@@ -11,6 +11,8 @@ namespace TelePsy.BLL.Interfaces
         Task RejectPsychologistAsync(int psychologistId, string reason);
         Task<decimal> GetCommissionRateAsync();
         Task UpdateCommissionRateAsync(decimal rate);
+        Task<Dictionary<int, decimal>> GetPackageDiscountsAsync();
+        Task UpdatePackageDiscountsAsync(Dictionary<int, decimal> discounts);
         Task<(IEnumerable<Patient> Patients, int TotalCount)> GetPatientsAsync(int page, int pageSize, string? searchTerm, DateTime? creationDate);
         Task<(IEnumerable<Psychologist> Psychologists, int TotalCount)> GetPsychologistsAsync(int page, int pageSize, string? searchTerm, bool? isVerified, DateTime? creationDate);
         Task<Psychologist?> GetPsychologistDetailsAsync(int id);

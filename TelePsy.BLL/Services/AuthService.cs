@@ -42,93 +42,101 @@ namespace TelePsy.BLL.Services
             if (userExists != null)
                 throw new Exception("User already exists!");
 
-            User user = new User()
-            {
-                Email = model.Email,
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Email
-            };
+            await _unitOfWork.BeginTransactionAsync();
 
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                throw new Exception($"User creation failed! {errors}");
-            }
-
-            // Create Person
-            var person = new Person
-            {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                UserId = user.Id,
-                IsActive = true,
-                Gender = "No especificado",
-                PhoneNumber = "Sin número",
-                Address = "Sin dirección",
-                City = "Sin ciudad",
-                State = "Sin departamento",
-                Country = "Colombia"
-            };
-
-            await _unitOfWork.Repository<Person>().AddAsync(person);
-            await _unitOfWork.CompleteAsync();
-
-            if (!await _roleManager.RoleExistsAsync(model.Role))
-                await _roleManager.CreateAsync(new IdentityRole(model.Role));
-
-            await _userManager.AddToRoleAsync(user, model.Role);
-
-            // Create specific entity based on role if needed (Patient/Psychologist specific tables)
-            // Ideally we should link Patient/Psychologist to Person here.
-
-            if (model.Role == "Patient")
-            {
-                var patient = new Patient 
-                { 
-                    PersonId = person.Id, 
-                    IsActive = true,
-                    Occupation = "No especificada",
-                    EmergencyContact = "No especificado",
-                    PreferredGender = "No especificado",
-                    Interests = ""
-                };
-                await _unitOfWork.Repository<Patient>().AddAsync(patient);
-            }
-            else if (model.Role == "Psychologist")
-            {
-                var psychologist = new Psychologist 
-                { 
-                    PersonId = person.Id, 
-                    IsActive = true,
-                    LicenseNumber = "Pendiente",
-                    Specialization = "Pendiente",
-                    University = "Pendiente",
-                    Bio = "",
-                    Hobbies = ""
-                };
-
-                if (cvFile != null)
+            try {
+                User user = new User()
                 {
-                    psychologist.CvPath = await _fileStorageService.SaveFileAsync(cvFile.OpenReadStream(), cvFile.FileName, "psychologist-cvs");
+                    Email = model.Email,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    UserName = model.Email
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    throw new Exception($"User creation failed! {errors}");
                 }
 
-                await _unitOfWork.Repository<Psychologist>().AddAsync(psychologist);
+                // Create Person
+                var person = new Person
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    UserId = user.Id,
+                    IsActive = true,
+                    Gender = "No especificado",
+                    PhoneNumber = "Sin número",
+                    Address = "Sin dirección",
+                    City = "Sin ciudad",
+                    State = "Sin departamento",
+                    Country = "Colombia"
+                };
+
+                await _unitOfWork.Repository<Person>().AddAsync(person);
+                await _unitOfWork.CompleteAsync();
+
+                if (!await _roleManager.RoleExistsAsync(model.Role))
+                    await _roleManager.CreateAsync(new IdentityRole(model.Role));
+
+                await _userManager.AddToRoleAsync(user, model.Role);
+
+                if (model.Role == "Patient")
+                {
+                    var patient = new Patient 
+                    { 
+                        PersonId = person.Id, 
+                        IsActive = true,
+                        Occupation = "No especificada",
+                        EmergencyContact = "No especificado",
+                        PreferredGender = "No especificado",
+                        Interests = ""
+                    };
+                    await _unitOfWork.Repository<Patient>().AddAsync(patient);
+                }
+                else if (model.Role == "Psychologist")
+                {
+                    var psychologist = new Psychologist 
+                    { 
+                        PersonId = person.Id, 
+                        IsActive = true,
+                        LicenseNumber = "Pendiente",
+                        Specialization = "Pendiente",
+                        University = "Pendiente",
+                        Bio = "",
+                        Hobbies = ""
+                    };
+
+                    if (cvFile != null)
+                    {
+                        // External IO before final DB commit
+                        psychologist.CvPath = await _fileStorageService.SaveFileAsync(cvFile.OpenReadStream(), cvFile.FileName, "psychologist-cvs");
+                    }
+
+                    await _unitOfWork.Repository<Psychologist>().AddAsync(psychologist);
+                }
+
+                await _unitOfWork.CompleteAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                // Non-critical operations after commit
+                try
+                {
+                    await _emailService.SendWelcomeEmailAsync(user, model.FirstName);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error sending welcome email: {ex.Message}");
+                }
+
+                return await GenerateJwtToken(user);
             }
-
-            await _unitOfWork.CompleteAsync();
-
-            try
+            catch (Exception)
             {
-                await _emailService.SendWelcomeEmailAsync(user, model.FirstName);
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
             }
-            catch (Exception ex)
-            {
-                // Log error but don't fail registration
-                Console.WriteLine($"Error sending welcome email: {ex.Message}");
-            }
-
-            return await GenerateJwtToken(user);
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto model)
@@ -239,11 +247,21 @@ namespace TelePsy.BLL.Services
         public async Task<string> ForgotPasswordAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-                throw new Exception("User not found");
+            
+            // Security: Don't disclose if user exists
+            if (user != null)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                
+                // Construct reset link
+                var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:3000";
+                var resetLink = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(email)}";
+                
+                await _emailService.SendPasswordResetEmailAsync(user, resetLink);
+                return "Si el correo está registrado, recibirás un enlace de recuperación.";
+            }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            return token; // In a real app, send this via email
+            return "Si el correo está registrado, recibirás un enlace de recuperación.";
         }
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordDto model)

@@ -9,5 +9,6 @@ namespace TelePsy.BLL.Interfaces
         Task SendWelcomeEmailAsync(User user, string firstName);
         Task SendPaymentConfirmationAsync(Appointment appointment);
         Task SendAppointmentChangeNotificationAsync(Appointment appointment, string reason, string role);
+        Task SendPasswordResetEmailAsync(User user, string resetLink);
     }
 }

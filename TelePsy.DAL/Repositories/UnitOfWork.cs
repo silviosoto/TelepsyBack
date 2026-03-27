@@ -37,6 +37,23 @@ namespace TelePsy.DAL.Repositories
             return await _context.SaveChangesAsync();
         }
 
+        public async Task BeginTransactionAsync()
+        {
+            await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            if (_context.Database.CurrentTransaction != null)
+                await _context.Database.CommitTransactionAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            if (_context.Database.CurrentTransaction != null)
+                await _context.Database.RollbackTransactionAsync();
+        }
+
         public void Dispose()
         {
             _context.Dispose();

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TelePsy.DAL.Context;
 
@@ -11,9 +12,11 @@ using TelePsy.DAL.Context;
 namespace TelePsy.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323003515_AddSessionPackages")]
+    partial class AddSessionPackages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -826,7 +829,7 @@ namespace TelePsy.DAL.Migrations
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PaymentId")
+                    b.Property<int>("PaymentId")
                         .HasColumnType("int");
 
                     b.Property<int>("PsychologistId")
@@ -846,8 +849,7 @@ namespace TelePsy.DAL.Migrations
                     b.HasIndex("PatientId");
 
                     b.HasIndex("PaymentId")
-                        .IsUnique()
-                        .HasFilter("[PaymentId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("PsychologistId");
 
@@ -1311,7 +1313,8 @@ namespace TelePsy.DAL.Migrations
                     b.HasOne("TelePsy.Domain.Entities.Payment", "Payment")
                         .WithOne()
                         .HasForeignKey("TelePsy.Domain.Entities.SessionPackage", "PaymentId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("TelePsy.Domain.Entities.Psychologist", "Psychologist")
                         .WithMany()

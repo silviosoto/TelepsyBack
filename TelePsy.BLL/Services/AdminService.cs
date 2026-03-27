@@ -99,6 +99,65 @@ namespace TelePsy.BLL.Services
                 "CommissionRate", $"Commission rate updated to {rate}");
         }
 
+        public async Task<Dictionary<int, decimal>> GetPackageDiscountsAsync()
+        {
+            var keys = new[] { "PackageDiscount4Sessions", "PackageDiscount8Sessions", "PackageDiscount12Sessions" };
+            var configs = await _unitOfWork.Repository<GlobalConfiguration>().GetAsync(c => keys.Contains(c.Key));
+            
+            var result = new Dictionary<int, decimal>
+            {
+                { 4, 0.05m },
+                { 8, 0.08m },
+                { 12, 0.12m }
+            };
+
+            foreach (var config in configs)
+            {
+                if (config.Key == "PackageDiscount4Sessions" && decimal.TryParse(config.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val4)) result[4] = val4;
+                if (config.Key == "PackageDiscount8Sessions" && decimal.TryParse(config.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val8)) result[8] = val8;
+                if (config.Key == "PackageDiscount12Sessions" && decimal.TryParse(config.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val12)) result[12] = val12;
+            }
+
+            return result;
+        }
+
+        public async Task UpdatePackageDiscountsAsync(Dictionary<int, decimal> discounts)
+        {
+            var keysMap = new Dictionary<int, string>
+            {
+                { 4, "PackageDiscount4Sessions" },
+                { 8, "PackageDiscount8Sessions" },
+                { 12, "PackageDiscount12Sessions" }
+            };
+
+            foreach (var kvp in discounts)
+            {
+                if (!keysMap.ContainsKey(kvp.Key)) continue;
+
+                var key = keysMap[kvp.Key];
+                var config = (await _unitOfWork.Repository<GlobalConfiguration>().GetAsync(c => c.Key == key)).FirstOrDefault();
+
+                if (config == null)
+                {
+                    config = new GlobalConfiguration
+                    {
+                        Key = key,
+                        Value = kvp.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    };
+                    await _unitOfWork.Repository<GlobalConfiguration>().AddAsync(config);
+                }
+                else
+                {
+                    config.Value = kvp.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    config.LastUpdated = DateTime.UtcNow;
+                    _unitOfWork.Repository<GlobalConfiguration>().Update(config);
+                }
+            }
+
+            await _unitOfWork.CompleteAsync();
+            await _auditService.LogAsync("Admin", "Update", "GlobalConfiguration", "PackageDiscounts", "Package discounts updated");
+        }
+
         public async Task<(IEnumerable<Patient> Patients, int TotalCount)> GetPatientsAsync(int page, int pageSize, string? searchTerm, DateTime? creationDate)
         {
             var query = await _unitOfWork.Repository<Patient>().GetAsync(includeProperties: "Person,Person.User");

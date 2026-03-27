@@ -2,6 +2,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
+using System;
+
 using Microsoft.Extensions.Configuration;
 using TelePsy.BLL.Interfaces;
 
@@ -19,11 +22,21 @@ namespace TelePsy.BLL.Services
         public async Task<string> SaveFileAsync(Stream fileStream, string fileName, string containerName)
         {
             var container = new BlobContainerClient(_connectionString, containerName);
-            await container.CreateIfNotExistsAsync(PublicAccessType.Blob);
+            await container.CreateIfNotExistsAsync(PublicAccessType.None);
 
             var blob = container.GetBlobClient(fileName);
             await blob.UploadAsync(fileStream, new BlobHttpHeaders { ContentType = GetContentType(fileName) });
 
+            return fileName;
+        }
+
+        private string GetSasUrl(BlobClient blob)
+        {
+            if (blob.CanGenerateSasUri)
+            {
+                var sasUri = blob.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(24));
+                return sasUri.ToString();
+            }
             return blob.Uri.ToString();
         }
 
@@ -42,7 +55,7 @@ namespace TelePsy.BLL.Services
         {
             var container = new BlobContainerClient(_connectionString, containerName);
             var blob = container.GetBlobClient(fileName);
-            return Task.FromResult(blob.Uri.ToString());
+            return Task.FromResult(GetSasUrl(blob));
         }
 
         private string GetContentType(string fileName)

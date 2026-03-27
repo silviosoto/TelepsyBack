@@ -32,5 +32,8 @@ namespace TelePsy.Domain.Entities
 
         public int? PsychologistInvoiceId { get; set; }
         public Invoice PsychologistInvoice { get; set; }
+
+        public int? SessionPackageId { get; set; }
+        public SessionPackage? SessionPackage { get; set; }
     }
 }

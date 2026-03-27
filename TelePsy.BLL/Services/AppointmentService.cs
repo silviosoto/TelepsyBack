@@ -15,11 +15,13 @@ namespace TelePsy.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
+        private readonly IVideoService _videoService;
 
-        public AppointmentService(IUnitOfWork unitOfWork, IEmailService emailService)
+        public AppointmentService(IUnitOfWork unitOfWork, IEmailService emailService, IVideoService videoService)
         {
             _unitOfWork = unitOfWork;
             _emailService = emailService;
+            _videoService = videoService;
         }
 
         public async Task<Appointment> CreateAppointmentAsync(Appointment appointment)
@@ -66,24 +68,31 @@ namespace TelePsy.BLL.Services
         public async Task<IEnumerable<Appointment>> GetAppointmentsForPatientAsync(int patientId)
         {
             return await _unitOfWork.Repository<Appointment>().GetAsync(a => a.PatientId == patientId,
-                includeProperties: "Patient.Person,Psychologist.Person,Therapy");
+                includeProperties: "Patient.Person,Psychologist.Person,Therapy,SessionPackage");
         }
 
         public async Task<IEnumerable<Appointment>> GetPatientAppointmentsByUserIdAsync(string userId)
         {
-            var person = (await _unitOfWork.Repository<Person>().GetAsync(p => p.UserId == userId)).FirstOrDefault();
-            if (person == null) return new List<Appointment>();
-
-            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(p => p.PersonId == person.Id)).FirstOrDefault();
+            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(p => p.Person.UserId == userId)).FirstOrDefault();
             if (patient == null) return new List<Appointment>();
 
             return await GetAppointmentsForPatientAsync(patient.Id);
         }
 
+        public async Task<IEnumerable<SessionPackage>> GetActivePackagesForPatientAsync(string userId)
+        {
+            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(p => p.Person.UserId == userId)).FirstOrDefault();
+            if (patient == null) return new List<SessionPackage>();
+
+            return await _unitOfWork.Repository<SessionPackage>().GetAsync(
+                sp => sp.PatientId == patient.Id && sp.IsActive && sp.UsedSessions < sp.TotalSessions,
+                includeProperties: "Psychologist.Person,Therapy");
+        }
+
         public async Task<IEnumerable<Appointment>> GetAppointmentsForPsychologistAsync(int psychologistId)
         {
             return await _unitOfWork.Repository<Appointment>().GetAsync(a => a.PsychologistId == psychologistId,
-                includeProperties: "Patient.Person,Psychologist.Person");
+                includeProperties: "Patient.Person,Psychologist.Person,SessionPackage");
         }
 
         public async Task CancelAppointmentAsync(int appointmentId)
@@ -273,7 +282,7 @@ namespace TelePsy.BLL.Services
 
             if (isBusy) throw new Exception("The selected time slot is no longer available.");
 
-            // 3. Create Appointment in Pending status
+            // 3. Prepare Appointment in Pending status
             var appointment = new Appointment
             {
                 PatientId = patient.Id,
@@ -290,25 +299,121 @@ namespace TelePsy.BLL.Services
                 pt => pt.PsychologistId == dto.PsychologistId && pt.TherapyId == dto.TherapyId && pt.IsActive
             );
 
+            decimal baseRate = 0;
             if (therapyConfig != null)
             {
-                appointment.Rate = therapyConfig.Rate;
+                baseRate = therapyConfig.Rate;
             }
             else
             {
                 var psychologist = await _unitOfWork.Repository<Psychologist>().GetByIdAsync(dto.PsychologistId);
-                appointment.Rate = psychologist?.SessionRate ?? 0;
+                baseRate = psychologist?.SessionRate ?? 0;
+            }
+
+            appointment.Rate = baseRate;
+
+            int packageSessions = dto.PackageSessions ?? 1;
+
+            // Check if patient already has an active package with available sessions
+            var activePackage = (await _unitOfWork.Repository<SessionPackage>().GetAsync(sp =>
+                sp.PatientId == patient.Id &&
+                sp.PsychologistId == dto.PsychologistId &&
+                sp.TherapyId == dto.TherapyId &&
+                sp.IsActive &&
+                sp.UsedSessions < sp.TotalSessions
+            )).FirstOrDefault();
+
+            if (activePackage != null && dto.PackageSessions == null) // If they have an active package and didn't explicitly request to buy a new one
+            {
+                appointment.Status = AppointmentStatus.Confirmed; // Already paid via package!
+                appointment.SessionPackageId = activePackage.Id;
+                
+                activePackage.UsedSessions++;
+                _unitOfWork.Repository<SessionPackage>().Update(activePackage);
+
+                // Generate Zoom link
+                try
+                {
+                    // Mock object to pass to video service or fetch full
+                    appointment.Patient = patient;
+                    var psychologist = await _unitOfWork.Repository<Psychologist>().GetFirstOrDefaultAsync(p => p.Id == dto.PsychologistId, includeProperties: "Person.User");
+                    appointment.Psychologist = psychologist;
+                    appointment.VideoLink = await _videoService.GenerateMeetingLinkAsync(appointment);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error generating Zoom link: {ex.Message}");
+                }
+
+                await _unitOfWork.Repository<Appointment>().AddAsync(appointment);
+                await _unitOfWork.CompleteAsync();
+
+                return new BookingResponseDto
+                {
+                    AppointmentId = appointment.Id,
+                    Message = "Booking confirmed using active package"
+                };
             }
 
             await _unitOfWork.Repository<Appointment>().AddAsync(appointment);
             await _unitOfWork.CompleteAsync(); // Save to get Appointment.Id
 
-            // 4. Create Invoice for the appointment
+            // If a new package is being purchased
+            SessionPackage? newPackage = null;
+            decimal totalAmount = baseRate;
+
+            if (packageSessions > 1)
+            {
+                // Get discount
+                string configKey = packageSessions switch
+                {
+                    4 => "PackageDiscount4Sessions",
+                    8 => "PackageDiscount8Sessions",
+                    12 => "PackageDiscount12Sessions",
+                    _ => ""
+                };
+
+                decimal discountPercentage = 0;
+                if (!string.IsNullOrEmpty(configKey))
+                {
+                    var config = (await _unitOfWork.Repository<GlobalConfiguration>().GetAsync(c => c.Key == configKey)).FirstOrDefault();
+                    if (config != null && decimal.TryParse(config.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedDiscount))
+                    {
+                        discountPercentage = parsedDiscount;
+                    }
+                }
+
+                decimal originalTotal = baseRate * packageSessions;
+                totalAmount = originalTotal * (1 - discountPercentage);
+
+                newPackage = new SessionPackage
+                {
+                    PatientId = patient.Id,
+                    PsychologistId = dto.PsychologistId,
+                    TherapyId = dto.TherapyId,
+                    OriginalTotalAmount = originalTotal,
+                    DiscountPercentage = discountPercentage,
+                    FinalAmount = totalAmount,
+                    TotalSessions = packageSessions,
+                    UsedSessions = 1, // This first appointment uses 1 session immediately
+                    IsActive = false, // Will be activated upon payment
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _unitOfWork.Repository<SessionPackage>().AddAsync(newPackage);
+                await _unitOfWork.CompleteAsync();
+
+                // Link the appointment to the pending package
+                appointment.SessionPackageId = newPackage.Id;
+                _unitOfWork.Repository<Appointment>().Update(appointment);
+            }
+
+            // 4. Create Invoice for the appointment (or package)
             var invoice = new Invoice
             {
                 InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{appointment.Id}-{Guid.NewGuid().ToString().Substring(0, 4)}",
                 IssueDate = DateTime.UtcNow,
-                TotalAmount = appointment.Rate,
+                TotalAmount = totalAmount,
                 Type = InvoiceType.ClientPurchase,
                 Status = InvoiceStatus.Issued,
                 PatientId = patient.Id
@@ -318,14 +423,15 @@ namespace TelePsy.BLL.Services
             await _unitOfWork.CompleteAsync(); // Save to get Invoice.Id
 
             // 5. Create InvoiceDetail to link them
+            string description = packageSessions > 1 ? $"Paquete de {packageSessions} sesiones" : $"Sesión de Terapia - {appointment.ScheduledTime:dd/MM/yyyy HH:mm}";
             var detail = new InvoiceDetail
             {
                 InvoiceId = invoice.Id,
                 AppointmentId = appointment.Id,
-                Description = $"Sesión de Terapia - {appointment.ScheduledTime:dd/MM/yyyy HH:mm}",
-                UnitPrice = appointment.Rate,
-                Total = appointment.Rate,
-                CommissionAmount = appointment.Rate * 0.30m // Assuming 30% commission
+                Description = description,
+                UnitPrice = totalAmount,
+                Total = totalAmount,
+                CommissionAmount = totalAmount * 0.30m // Assuming 30% commission
             };
 
             await _unitOfWork.Repository<InvoiceDetail>().AddAsync(detail);
@@ -352,13 +458,15 @@ namespace TelePsy.BLL.Services
             // but we can find the invoice where the PatientId matches and it's a ClientPurchase for this amount?
             // Better: We should probably add an InvoiceId to Appointment or link them via InvoiceDetail.
             
-            // Let's check InvoiceDetail
             var invoiceDetail = (await _unitOfWork.Repository<InvoiceDetail>().GetAsync(d => d.AppointmentId == appointmentId)).FirstOrDefault();
             
             int invoiceId = 0;
+            decimal checkoutAmount = appointment.Rate;
+
             if (invoiceDetail != null)
             {
                 invoiceId = invoiceDetail.InvoiceId;
+                checkoutAmount = invoiceDetail.Total;
             }
             else
             {
@@ -375,7 +483,7 @@ namespace TelePsy.BLL.Services
                 PsychologistName = appointment.Psychologist?.Person != null ? $"{appointment.Psychologist.Person.FirstName} {appointment.Psychologist.Person.LastName}" : "Unknown",
                 TherapyName = appointment.Therapy?.Name ?? "General Session",
                 ScheduledTime = appointment.ScheduledTime,
-                Amount = appointment.Rate
+                Amount = checkoutAmount
             };
         }
 

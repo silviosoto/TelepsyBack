@@ -20,18 +20,24 @@ namespace TelePsy.BLL.Services
 
         public async Task<Psychologist?> GetPsychologistByIdAsync(int id)
         {
-            return (await _unitOfWork.Repository<Psychologist>().GetAsync(
+            var psychologist = (await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.Id == id,
                 includeProperties: "Person.User,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
+
+            if (psychologist != null) await ResolvePsychologistUrlsAsync(psychologist);
+            return psychologist;
         }
 
         public async Task<Psychologist?> GetPsychologistByUserIdAsync(string userId)
         {
-            return (await _unitOfWork.Repository<Psychologist>().GetAsync(
+            var psychologist = (await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.Person.UserId == userId,
                 includeProperties: "Person.User,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
+
+            if (psychologist != null) await ResolvePsychologistUrlsAsync(psychologist);
+            return psychologist;
         }
 
         public async Task UpdateProfileAsync(int psychologistId, PsychologistProfileDto dto)
@@ -71,17 +77,36 @@ namespace TelePsy.BLL.Services
 
         public async Task<IEnumerable<Psychologist>> GetAllPsychologistsAsync()
         {
-            return await _unitOfWork.Repository<Psychologist>().GetAsync(
+            var psychologists = await _unitOfWork.Repository<Psychologist>().GetAsync(
                 includeProperties: "Person"
             );
+
+            foreach (var p in psychologists) await ResolvePsychologistUrlsAsync(p);
+            return psychologists;
         }
 
         public async Task<IEnumerable<Psychologist>> GetVerifiedPsychologistsAsync()
         {
-            return await _unitOfWork.Repository<Psychologist>().GetAsync(
+            var psychologists = await _unitOfWork.Repository<Psychologist>().GetAsync(
                 p => p.IsVerified && p.IsActive,
                 includeProperties: "Person,Therapies.Therapy,Specialties.Specialty"
             );
+
+            foreach (var p in psychologists) await ResolvePsychologistUrlsAsync(p);
+            return psychologists;
+        }
+
+        private async Task ResolvePsychologistUrlsAsync(Psychologist p)
+        {
+            if (!string.IsNullOrEmpty(p.ProfilePicturePath))
+            {
+                p.ProfilePicturePath = await _fileStorageService.GetFileUrlAsync(p.ProfilePicturePath, "profile-pictures");
+            }
+
+            if (!string.IsNullOrEmpty(p.CvPath))
+            {
+                p.CvPath = await _fileStorageService.GetFileUrlAsync(p.CvPath, "cvs");
+            }
         }
 
         public async Task UploadCvAsync(int psychologistId, Stream fileStream, string fileName)

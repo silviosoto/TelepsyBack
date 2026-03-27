@@ -84,6 +84,39 @@ namespace TelePsy.API.Controllers
             }
         }
 
+        [HttpGet("my-packages")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> GetMyPackages()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var result = await _appointmentService.GetActivePackagesForPatientAsync(userId);
+                
+                // Construct a simpler DTO to prevent JSON cycle issues and unneeded data
+                var packageDtos = result.Select(p => new
+                {
+                    p.Id,
+                    p.PsychologistId,
+                    PsychologistName = $"{p.Psychologist?.Person?.FirstName} {p.Psychologist?.Person?.LastName}",
+                    p.TherapyId,
+                    TherapyName = p.Therapy?.Name,
+                    p.TotalSessions,
+                    p.UsedSessions,
+                    p.IsActive,
+                    p.CreatedAt
+                });
+
+                return Ok(packageDtos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [Authorize(Roles = "Patient")]
         [HttpGet("patient/{patientId}")]
         public async Task<IActionResult> GetForPatient(int patientId)

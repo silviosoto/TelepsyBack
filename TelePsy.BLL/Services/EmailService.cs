@@ -154,5 +154,27 @@ namespace TelePsy.BLL.Services
 
             await _resend.EmailSendAsync(message);
         }
+
+        public async Task SendPasswordResetEmailAsync(User user, string resetLink)
+        {
+            var message = new EmailMessage();
+            message.From = _fromEmail;
+            message.To.Add(user.Email);
+            message.Subject = "Restablece tu contraseña de TelePsy 🔒";
+            message.HtmlBody = $@"
+                <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                    <h2 style='color: #4A90E2;'>Restablece tu contraseña</h2>
+                    <p>Hola, has solicitado restablecer tu contraseña en TelePsy.</p>
+                    <p>Haz clic en el botón de abajo para elegir una nueva contraseña. Este enlace caducará en 2 horas.</p>
+                    <div style='text-align: center; margin: 30px 0;'>
+                        <a href='{resetLink}' style='background-color: #4A90E2; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Restablecer Contraseña</a>
+                    </div>
+                    <p>Si no solicitaste este cambio, puedes ignorar este correo de forma segura.</p>
+                    <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+                    <p style='color: #777; font-size: 11px;'>Para tu seguridad, nunca compartas este enlace con nadie.</p>
+                </div>";
+
+            await _resend.EmailSendAsync(message);
+        }
     }
 }

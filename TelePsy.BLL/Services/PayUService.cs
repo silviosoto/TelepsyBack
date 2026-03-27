@@ -158,23 +158,28 @@ namespace TelePsy.BLL.Services
                     _unitOfWork.Repository<Invoice>().Update(invoice);
                 }
 
-                var appointment = (await _unitOfWork.Repository<Appointment>().GetAsync(a => a.Id == payment.AppointmentId))
-                    .FirstOrDefault();
+                var appointment = (await _unitOfWork.Repository<Appointment>().GetAsync(
+                    a => a.Id == payment.AppointmentId,
+                    includeProperties: "Patient.Person,Psychologist.Person.User,Therapy,SessionPackage"
+                )).FirstOrDefault();
+
                 if (appointment != null)
                 {
                     appointment.Status = AppointmentStatus.Confirmed;
+
+                    if (appointment.SessionPackage != null)
+                    {
+                        appointment.SessionPackage.IsActive = true;
+                        appointment.SessionPackage.PaymentId = payment.Id;
+                        _unitOfWork.Repository<SessionPackage>().Update(appointment.SessionPackage);
+                    }
                     
                     // Generate Zoom link if it's an online session
                     try
                     {
-                        var fullAppointment = (await _unitOfWork.Repository<Appointment>().GetAsync(
-                            a => a.Id == appointment.Id,
-                            includeProperties: "Patient.Person,Psychologist.Person.User,Therapy"
-                        )).FirstOrDefault();
-
-                        if (fullAppointment != null && string.IsNullOrEmpty(fullAppointment.VideoLink))
+                        if (string.IsNullOrEmpty(appointment.VideoLink))
                         {
-                            string zoomLink = await _videoService.GenerateMeetingLinkAsync(fullAppointment);
+                            string zoomLink = await _videoService.GenerateMeetingLinkAsync(appointment);
                             appointment.VideoLink = zoomLink;
                         }
                     }

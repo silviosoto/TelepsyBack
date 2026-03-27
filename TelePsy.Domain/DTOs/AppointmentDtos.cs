@@ -7,6 +7,7 @@ namespace TelePsy.Domain.DTOs
         public int PsychologistId { get; set; }
         public int TherapyId { get; set; }
         public DateTime ScheduledTime { get; set; }
+        public int? PackageSessions { get; set; }
     }
 
     public class BookingResponseDto

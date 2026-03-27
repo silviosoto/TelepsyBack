@@ -16,6 +16,7 @@ namespace TelePsy.DAL.Context
         public DbSet<Admin> Admins { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<SessionPackage> SessionPackages { get; set; }
         public DbSet<ClinicalRecord> ClinicalRecords { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
@@ -66,6 +67,11 @@ namespace TelePsy.DAL.Context
                 entity.HasOne(a => a.Payment)
                     .WithOne(p => p.Appointment)
                     .HasForeignKey<Payment>(p => p.AppointmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.SessionPackage)
+                    .WithMany(sp => sp.Appointments)
+                    .HasForeignKey(a => a.SessionPackageId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -141,6 +147,34 @@ namespace TelePsy.DAL.Context
                     .WithMany() // Appointment doesn't need to know about details directly
                     .HasForeignKey(d => d.AppointmentId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // SessionPackage Configuration
+            builder.Entity<SessionPackage>(entity =>
+            {
+                entity.HasOne(sp => sp.Patient)
+                    .WithMany()
+                    .HasForeignKey(sp => sp.PatientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(sp => sp.Psychologist)
+                    .WithMany()
+                    .HasForeignKey(sp => sp.PsychologistId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(sp => sp.Therapy)
+                    .WithMany()
+                    .HasForeignKey(sp => sp.TherapyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(sp => sp.Payment)
+                    .WithOne()
+                    .HasForeignKey<SessionPackage>(sp => sp.PaymentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                    
+                entity.Property(sp => sp.OriginalTotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(sp => sp.DiscountPercentage).HasColumnType("decimal(18,2)");
+                entity.Property(sp => sp.FinalAmount).HasColumnType("decimal(18,2)");
             });
 
             // Therapy Configuration
