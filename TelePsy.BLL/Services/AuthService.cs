@@ -212,12 +212,15 @@ namespace TelePsy.BLL.Services
         private async Task<AuthResponseDto> GenerateJwtToken(User user)
         {
             var userRoles = await _userManager.GetRolesAsync(user);
+            var person = (await _unitOfWork.Repository<Person>().FindAsync(p => p.UserId == user.Id)).FirstOrDefault();
 
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim("FirstName", person?.FirstName ?? ""),
+                new Claim("LastName", person?.LastName ?? "")
             };
 
             foreach (var userRole in userRoles)
@@ -240,7 +243,9 @@ namespace TelePsy.BLL.Services
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 UserId = user.Id,
                 Email = user.Email,
-                Role = userRoles.Count > 0 ? userRoles[0] : null
+                Role = userRoles.Count > 0 ? userRoles[0] : null,
+                FirstName = person?.FirstName ?? "",
+                LastName = person?.LastName ?? ""
             };
         }
 
