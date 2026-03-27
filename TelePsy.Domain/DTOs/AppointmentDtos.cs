@@ -25,4 +25,20 @@ namespace TelePsy.Domain.DTOs
         public DateTime ScheduledTime { get; set; }
         public decimal Amount { get; set; }
     }
+
+    public class PatientAppointmentDto
+    {
+        public int Id { get; set; }
+        public int PsychologistId { get; set; }
+        public string? PsychologistName { get; set; }
+        public string? PsychologistSpecialty { get; set; }
+        public int TherapyId { get; set; }
+        public string? TherapyName { get; set; }
+        public DateTime ScheduledTime { get; set; }
+        public int DurationMinutes { get; set; }
+        public int Status { get; set; }
+        public string? VideoLink { get; set; }
+        public bool IsPackage { get; set; }
+        public int? SessionPackageId { get; set; }
+    }
 }

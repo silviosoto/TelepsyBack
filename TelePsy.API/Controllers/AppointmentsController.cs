@@ -57,7 +57,6 @@ namespace TelePsy.API.Controllers
             try
             {
                 var result = await _appointmentService.GetCheckoutSummaryAsync(id);
-                if (result == null) return NotFound();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -75,8 +74,25 @@ namespace TelePsy.API.Controllers
                 var userId = GetCurrentUserId();
                 if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-                var result = await _appointmentService.GetPatientAppointmentsByUserIdAsync(userId);
-                return Ok(result);
+                var appointments = await _appointmentService.GetPatientAppointmentsByUserIdAsync(userId);
+                
+                var dtos = appointments.Select(a => new PatientAppointmentDto
+                {
+                    Id = a.Id,
+                    PsychologistId = a.PsychologistId,
+                    PsychologistName = $"{a.Psychologist?.Person?.FirstName} {a.Psychologist?.Person?.LastName}",
+                    PsychologistSpecialty = a.Psychologist?.Specialization ?? "General",
+                    TherapyId = a.TherapyId,
+                    TherapyName = a.Therapy.Name ?? "Sesión de Psicología",
+                    ScheduledTime = a.ScheduledTime,
+                    DurationMinutes = a.DurationMinutes,
+                    Status = (int)a.Status,
+                    VideoLink = a.VideoLink,
+                    IsPackage = a.SessionPackageId.HasValue,
+                    SessionPackageId = a.SessionPackageId
+                });
+
+                return Ok(dtos);
             }
             catch (Exception ex)
             {
