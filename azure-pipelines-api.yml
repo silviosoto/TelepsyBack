@@ -1,45 +1,45 @@
 trigger:
   paths:
     include:
-      - Back/TelepsyBack/*
+      - '*'
   branches:
     include:
       - main
 
 pool:
-  vmImage: 'windows-latest' # Windows is usually better for .NET Framework/SDK consistency unless you know it runs on Linux
+  vmImage: 'windows-latest'
 
 variables:
   buildConfiguration: 'Release'
-  solution: 'Back/TelepsyBack/TelePsy.slnx' # Azure DevOps supports .slnx if using modern .NET SDK
-  project: 'Back/TelepsyBack/TelePsy.API/TelePsy.API.csproj'
+  solution: 'TelePsy.slnx' 
+  project: 'TelePsy.API/TelePsy.API.csproj'
 
 steps:
 - task: UseDotNet@2
   displayName: 'Use .NET SDK'
   inputs:
     packageType: 'sdk'
-    version: '10.x' # Update this to match your actual .NET 10 (or 9, 8) version
+    version: '10.x' 
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: DotNetCoreCLI@2
   displayName: 'Restore NuGet Packages'
   inputs:
     command: 'restore'
-    projects: 'Back/TelepsyBack/**/*.csproj'
+    projects: '**/*.csproj'
 
 - task: DotNetCoreCLI@2
   displayName: 'Build API Project'
   inputs:
     command: 'build'
-    projects: 'Back/TelepsyBack/**/*.csproj'
+    projects: '**/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Unit Tests'
   inputs:
     command: 'test'
-    projects: 'Back/TelepsyBack/**/*.Tests/*.csproj'
+    projects: '**/*.Tests/*.csproj'
     arguments: '--configuration $(buildConfiguration) --collect "Code coverage"'
 
 - task: DotNetCoreCLI@2
