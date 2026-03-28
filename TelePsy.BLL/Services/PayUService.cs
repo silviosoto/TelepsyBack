@@ -67,6 +67,7 @@ namespace TelePsy.BLL.Services
                 taxReturnBase = 0,
                 test = 1, // Sandbox mode
                 buyerEmail = invoice.Patient.Person.User.Email ?? "buyer@test.com",
+                currency = "COP",
                 responseUrl = _responseUrl,
                 confirmationUrl = _confirmationUrl,
                 checkoutUrl = _checkoutUrl

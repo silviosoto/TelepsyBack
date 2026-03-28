@@ -185,7 +185,7 @@ namespace TelePsy.BLL.Services
         {
             var config = (await _unitOfWork.Repository<GlobalConfiguration>().GetAsync(c => c.Key == CommissionKey))
                 .FirstOrDefault();
-            if (config != null && decimal.TryParse(config.Value, out var rate))
+            if (config != null && decimal.TryParse(config.Value, System.Globalization.CultureInfo.InvariantCulture, out var rate))
             {
                 return rate;
             }
