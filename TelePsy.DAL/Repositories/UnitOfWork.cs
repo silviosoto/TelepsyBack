@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections;
 using System.Threading.Tasks;
 using TelePsy.DAL.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace TelePsy.DAL.Repositories
 {
@@ -52,6 +54,11 @@ namespace TelePsy.DAL.Repositories
         {
             if (_context.Database.CurrentTransaction != null)
                 await _context.Database.RollbackTransactionAsync();
+        }
+
+        public IExecutionStrategy CreateExecutionStrategy()
+        {
+            return _context.Database.CreateExecutionStrategy();
         }
 
         public void Dispose()

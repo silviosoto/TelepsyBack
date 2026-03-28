@@ -2,6 +2,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,101 +43,107 @@ namespace TelePsy.BLL.Services
             if (userExists != null)
                 throw new Exception("User already exists!");
 
-            await _unitOfWork.BeginTransactionAsync();
+            var strategy = _unitOfWork.CreateExecutionStrategy();
 
-            try {
-                User user = new User()
-                {
-                    Email = model.Email,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    UserName = model.Email
-                };
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await _unitOfWork.BeginTransactionAsync();
 
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (!result.Succeeded)
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    throw new Exception($"User creation failed! {errors}");
-                }
-
-                // Create Person
-                var person = new Person
-                {
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    UserId = user.Id,
-                    IsActive = true,
-                    Gender = "No especificado",
-                    PhoneNumber = "Sin número",
-                    Address = "Sin dirección",
-                    City = "Sin ciudad",
-                    State = "Sin departamento",
-                    Country = "Colombia"
-                };
-
-                await _unitOfWork.Repository<Person>().AddAsync(person);
-                await _unitOfWork.CompleteAsync();
-
-                if (!await _roleManager.RoleExistsAsync(model.Role))
-                    await _roleManager.CreateAsync(new IdentityRole(model.Role));
-
-                await _userManager.AddToRoleAsync(user, model.Role);
-
-                if (model.Role == "Patient")
-                {
-                    var patient = new Patient 
-                    { 
-                        PersonId = person.Id, 
-                        IsActive = true,
-                        Occupation = "No especificada",
-                        EmergencyContact = "No especificado",
-                        PreferredGender = "No especificado",
-                        Interests = ""
-                    };
-                    await _unitOfWork.Repository<Patient>().AddAsync(patient);
-                }
-                else if (model.Role == "Psychologist")
-                {
-                    var psychologist = new Psychologist 
-                    { 
-                        PersonId = person.Id, 
-                        IsActive = true,
-                        LicenseNumber = "Pendiente",
-                        Specialization = "Pendiente",
-                        University = "Pendiente",
-                        Bio = "",
-                        Hobbies = ""
-                    };
-
-                    if (cvFile != null)
-                    {
-                        // External IO before final DB commit
-                        psychologist.CvPath = await _fileStorageService.SaveFileAsync(cvFile.OpenReadStream(), cvFile.FileName, "psychologist-cvs");
-                    }
-
-                    await _unitOfWork.Repository<Psychologist>().AddAsync(psychologist);
-                }
-
-                await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
-
-                // Non-critical operations after commit
                 try
                 {
-                    await _emailService.SendWelcomeEmailAsync(user, model.FirstName);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error sending welcome email: {ex.Message}");
-                }
+                    User user = new User()
+                    {
+                        Email = model.Email,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                        UserName = model.Email
+                    };
 
-                return await GenerateJwtToken(user);
-            }
-            catch (Exception)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
+                    var result = await _userManager.CreateAsync(user, model.Password);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                        throw new Exception($"User creation failed! {errors}");
+                    }
+
+                    // Create Person
+                    var person = new Person
+                    {
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        UserId = user.Id,
+                        IsActive = true,
+                        Gender = "No especificado",
+                        PhoneNumber = "Sin número",
+                        Address = "Sin dirección",
+                        City = "Sin ciudad",
+                        State = "Sin departamento",
+                        Country = "Colombia"
+                    };
+
+                    await _unitOfWork.Repository<Person>().AddAsync(person);
+                    await _unitOfWork.CompleteAsync();
+
+                    if (!await _roleManager.RoleExistsAsync(model.Role))
+                        await _roleManager.CreateAsync(new IdentityRole(model.Role));
+
+                    await _userManager.AddToRoleAsync(user, model.Role);
+
+                    if (model.Role == "Patient")
+                    {
+                        var patient = new Patient
+                        {
+                            PersonId = person.Id,
+                            IsActive = true,
+                            Occupation = "No especificada",
+                            EmergencyContact = "No especificado",
+                            PreferredGender = "No especificado",
+                            Interests = ""
+                        };
+                        await _unitOfWork.Repository<Patient>().AddAsync(patient);
+                    }
+                    else if (model.Role == "Psychologist")
+                    {
+                        var psychologist = new Psychologist
+                        {
+                            PersonId = person.Id,
+                            IsActive = true,
+                            LicenseNumber = "Pendiente",
+                            Specialization = "Pendiente",
+                            University = "Pendiente",
+                            Bio = "",
+                            Hobbies = ""
+                        };
+
+                        if (cvFile != null)
+                        {
+                            // External IO before final DB commit
+                            psychologist.CvPath = await _fileStorageService.SaveFileAsync(cvFile.OpenReadStream(), cvFile.FileName, "psychologist-cvs");
+                        }
+
+                        await _unitOfWork.Repository<Psychologist>().AddAsync(psychologist);
+                    }
+
+                    await _unitOfWork.CompleteAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    // Non-critical operations after commit
+                    try
+                    {
+                        await _emailService.SendWelcomeEmailAsync(user, model.FirstName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error sending welcome email: {ex.Message}");
+                    }
+
+                    return await GenerateJwtToken(user);
+                }
+                catch (Exception)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto model)

@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using TelePsy.BLL.Interfaces;
 using TelePsy.DAL.Repositories;
@@ -13,7 +12,6 @@ namespace TelePsy.BLL.Services
     public class PayUService : IPaymentService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
         private readonly IVideoService _videoService;
         private readonly string _merchantId;
@@ -22,20 +20,21 @@ namespace TelePsy.BLL.Services
         private readonly string _checkoutUrl;
         private readonly string _responseUrl;
         private readonly string _confirmationUrl;
+        private readonly bool _testMode;
 
         public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IVideoService videoService)
         {
             _unitOfWork = unitOfWork;
-            _configuration = configuration;
             _emailService = emailService;
             _videoService = videoService;
-            _merchantId = _configuration["PayU:MerchantId"] ?? string.Empty;
-            _apiKey = _configuration["PayU:ApiKey"] ?? string.Empty;
-            _accountId = _configuration["PayU:AccountId"] ?? string.Empty;
-            _checkoutUrl = _configuration["PayU:CheckoutUrl"] ??
-                           "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/";
-            _responseUrl = _configuration["PayU:ResponseUrl"] ?? string.Empty;
-            _confirmationUrl = _configuration["PayU:ConfirmationUrl"] ?? string.Empty;
+            _merchantId = configuration["PayU:MerchantId"] ?? string.Empty;
+            _apiKey = configuration["PayU:ApiKey"] ?? string.Empty;
+            _accountId = configuration["PayU:AccountId"] ?? string.Empty;
+            _testMode = configuration.GetValue("PayU:TestMode", true);
+            _checkoutUrl = configuration["PayU:CheckoutUrl"] ??
+                           (_testMode ? "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" : "https://checkout.payulatam.com/ppp-web-gateway-payu/");
+            _responseUrl = configuration["PayU:ResponseUrl"] ?? string.Empty;
+            _confirmationUrl = configuration["PayU:ConfirmationUrl"] ?? string.Empty;
         }
 
         public async Task<string> CreatePaymentRequestAsync(int invoiceId)
@@ -65,7 +64,8 @@ namespace TelePsy.BLL.Services
                 amount = amount.ToString("F0", CultureInfo.InvariantCulture),
                 tax = 0,
                 taxReturnBase = 0,
-                test = 1, // Sandbox mode
+                signature,
+                test = _testMode ? 1 : 0, 
                 buyerEmail = invoice.Patient.Person.User.Email ?? "buyer@test.com",
                 currency = "COP",
                 responseUrl = _responseUrl,

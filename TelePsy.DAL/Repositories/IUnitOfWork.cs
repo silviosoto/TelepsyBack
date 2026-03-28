@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Threading.Tasks;
 
@@ -10,5 +11,6 @@ namespace TelePsy.DAL.Repositories
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
+        IExecutionStrategy CreateExecutionStrategy();
     }
 }
