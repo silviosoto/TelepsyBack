@@ -1,0 +1,90 @@
+29/03/2026 15:18:14	Este registro contiene información acerca de la operación de importación de esquema en el proyecto 'TelePsyDB' del equipo 'DESKTOP-D6DI2L0' por el usuario 'USUARIO'.
+29/03/2026 15:18:15	Se inició la importación del esquema de la base de datos.
+29/03/2026 15:18:33	Recopilando credenciales de la base de datos
+29/03/2026 15:18:33	Recopilando opciones de base de datos
+29/03/2026 15:18:33	Recopilando la opción de configuración de ámbito de la base de datos genérica
+29/03/2026 15:18:33	Recopilando usuarios
+29/03/2026 15:18:33	Recopilando roles
+29/03/2026 15:18:33	Recopilando roles de aplicación
+29/03/2026 15:18:33	Recopilando pertenencias a roles
+29/03/2026 15:18:33	Recopilando grupos de archivos
+29/03/2026 15:18:33	Recopilando catálogos de texto completo
+29/03/2026 15:18:33	Recopilando ensamblados
+29/03/2026 15:18:33	Recopilando certificados
+29/03/2026 15:18:33	Recopilando claves asimétricas
+29/03/2026 15:18:33	Recopilando claves simétricas
+29/03/2026 15:18:33	Recopilando claves simétricas cifradas
+29/03/2026 15:18:33	Recopilando esquemas
+29/03/2026 15:18:33	Recopilando colecciones de esquemas XML
+29/03/2026 15:18:33	Recopilando tipos de datos definidos por el usuario
+29/03/2026 15:18:33	Recopilando tipos definidos por el usuario
+29/03/2026 15:18:33	Recopilando tipos de tabla
+29/03/2026 15:18:33	Recopilando claves únicas para tipos de tabla
+29/03/2026 15:18:33	Recopilando claves principales para tipos de tabla
+29/03/2026 15:18:59	Recopilando índices para tipos de tablas
+29/03/2026 15:18:59	Recopilando restricciones CHECK para tipos de tabla
+29/03/2026 15:18:59	Recopilando restricciones DEFAULT para tipos de tabla
+29/03/2026 15:18:59	Recopilando funciones de partición
+29/03/2026 15:18:59	Recopilando esquemas de partición
+29/03/2026 15:18:59	Recopilando funciones
+29/03/2026 15:18:59	Recopilando funciones cifradas
+29/03/2026 15:18:59	Recopilando agregados
+29/03/2026 15:18:59	Recopilando procedimientos
+29/03/2026 15:18:59	Recopilando procedimientos cifrados
+29/03/2026 15:18:59	Recopilando tablas
+29/03/2026 15:19:35	Recopilando claves principales
+29/03/2026 15:19:35	Recopilando restricciones UNIQUE
+29/03/2026 15:19:35	Recopilando claves externas
+29/03/2026 15:19:35	Recopilando restricciones DEFAULT
+29/03/2026 15:19:35	Recopilando restricciones CHECK
+29/03/2026 15:19:35	Recopilando vistas
+29/03/2026 15:19:35	Recopilando vistas cifradas
+29/03/2026 15:19:35	Recopilando índices
+29/03/2026 15:19:35	Recopilando estadísticas
+29/03/2026 15:19:35	Recopilando listas de palabras irrelevantes de índices de texto completo
+29/03/2026 15:19:35	Recopilando listas de propiedades de búsqueda
+29/03/2026 15:19:35	Recopilando propiedades de búsqueda
+29/03/2026 15:19:35	Recopilando índices de texto completo
+29/03/2026 15:19:35	Recopilando índices de almacenamiento de columnas
+29/03/2026 15:19:35	Recopilando índices espaciales
+29/03/2026 15:19:35	Recopilando índices XML
+29/03/2026 15:19:35	Recolección de índices JSON
+29/03/2026 15:19:36	Recopilando índices XML selectivos
+29/03/2026 15:19:36	Recopilando desencadenadores cifrados
+29/03/2026 15:19:36	Recopilando desencadenadores
+29/03/2026 15:19:36	Recopilando DDL triggers cifrados y de CLR
+29/03/2026 15:19:36	Recopilando DDL triggers
+29/03/2026 15:19:36	Creación de la restricción perimetral en curso
+29/03/2026 15:19:36	Recopilando sinónimos
+29/03/2026 15:19:36	Recopilando valores predeterminados
+29/03/2026 15:19:36	Recopilando enlaces UDDT de restricción de datos
+29/03/2026 15:19:36	Recopilando reglas
+29/03/2026 15:19:36	Recopilando enlaces UDDT de restricción de datos
+29/03/2026 15:19:36	Recopilando tipos de mensaje
+29/03/2026 15:19:36	Recopilando colas
+29/03/2026 15:19:36	Recopilando contratos
+29/03/2026 15:19:36	Recopilando servicios
+29/03/2026 15:19:36	Recopilando notificaciones de eventos
+29/03/2026 15:19:36	Recopilando enlaces de servicio remoto
+29/03/2026 15:19:36	Recopilando prioridades de Broker
+29/03/2026 15:19:36	Recopilando firmas
+29/03/2026 15:19:36	Recopilando opciones de compresión
+29/03/2026 15:19:36	Recopilando tipos de secuencia
+29/03/2026 15:19:36	Recopilando directivas de seguridad
+29/03/2026 15:19:36	Recopilar claves de cifrado de columna
+29/03/2026 15:19:36	Recopilando claves maestras de columna
+29/03/2026 15:19:36	Recopilando orígenes de datos externos
+29/03/2026 15:19:36	Recopilando formatos de archivo externos
+29/03/2026 15:19:36	Recopilando modelos externos
+29/03/2026 15:19:36	Recopilando tablas externas
+29/03/2026 15:19:36	Recopilando opciones de compresión de índice XML
+29/03/2026 15:19:36	Recopilando propiedades extendidas
+29/03/2026 15:19:37	Recopilando ensamblados
+29/03/2026 15:19:37	Recopilando credenciales
+29/03/2026 15:19:37	Recopilando inicios de sesión
+29/03/2026 15:19:37	Recopilando auditorías de servidor
+29/03/2026 15:19:39	Buscando elementos duplicados en el proyecto
+29/03/2026 15:19:39	Ha finalizado el procesamiento de los elementos duplicados
+29/03/2026 15:19:40	Finalizó la importación de la base de datos.
+29/03/2026 15:19:40	Se guardó un resumen de la importación en la siguiente ubicación: C:\Users\USUARIO\OneDrive\Documentos\Personal\Ideas\TelePsy\Back\TelepsyBack\TelePsyDB\Registros de importación de esquemas\TelePsyDB_20260329081814.log
+29/03/2026 15:19:40	Haga clic en Finalizar para continuar...
