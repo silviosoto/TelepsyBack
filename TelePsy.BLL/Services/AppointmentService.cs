@@ -423,7 +423,8 @@ namespace TelePsy.BLL.Services
             await _unitOfWork.CompleteAsync(); // Save to get Invoice.Id
 
             // 5. Create InvoiceDetail to link them
-            string description = packageSessions > 1 ? $"Paquete de {packageSessions} sesiones" : $"Sesión de Terapia - {appointment.ScheduledTime:dd/MM/yyyy HH:mm}";
+            var colombiaTime = appointment.ScheduledTime.AddHours(-5);
+            string description = packageSessions > 1 ? $"Paquete de {packageSessions} sesiones" : $"Sesión de Terapia - {colombiaTime:dd/MM/yyyy HH:mm}";
             var detail = new InvoiceDetail
             {
                 InvoiceId = invoice.Id,
