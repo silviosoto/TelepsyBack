@@ -31,12 +31,8 @@ namespace TelePsy.Domain.DTOs
         public string Bio { get; set; } = string.Empty;
         public string Hobbies { get; set; } = string.Empty;
 
-        [StringLength(20, ErrorMessage = "El tipo de cuenta no puede exceder los 20 caracteres")]
-        public string? BankAccountType { get; set; }
-
-        [StringLength(50, ErrorMessage = "El número de cuenta no puede exceder los 50 caracteres")]
-        [RegularExpression(@"^[0-9-]+$", ErrorMessage = "El número de cuenta solo puede contener números y guiones")]
-        public string? BankAccountNumber { get; set; }
+        [StringLength(100, ErrorMessage = "La información de cuenta no puede exceder los 100 caracteres")]
+        public string? PaymentAccount { get; set; }
     }
 
     public class TherapyTypeDto

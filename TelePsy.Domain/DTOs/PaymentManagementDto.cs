@@ -20,6 +20,7 @@ namespace TelePsy.Domain.DTOs
         public bool PatientAttended { get; set; }
         public bool PsychologistAttended { get; set; }
         public int AppointmentId { get; set; }
+        public string? PsychologistPaymentAccount { get; set; }
     }
 
     public class PsychologistPayoutRequestDto

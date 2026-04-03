@@ -15,5 +15,6 @@ namespace TelePsy.Domain.DTOs
         public int AppointmentId { get; set; }
         public string? TherapyName { get; set; }
         public string? PsychologistName { get; set; }
+        public string? PsychologistPaymentAccount { get; set; }
     }
 }

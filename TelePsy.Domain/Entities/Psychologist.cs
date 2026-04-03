@@ -11,8 +11,7 @@ namespace TelePsy.Domain.Entities
         public string University { get; set; }
         public int ExperienceYears { get; set; }
         public decimal SessionRate { get; set; } // Hourly rate
-        public string? BankAccountType { get; set; } // Ahorros/Corriente
-        public string? BankAccountNumber { get; set; }
+        public string? PaymentAccount { get; set; }
 
         public string Bio { get; set; }
         public bool IsActive { get; set; } = true;

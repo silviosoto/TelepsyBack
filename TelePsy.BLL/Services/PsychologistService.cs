@@ -57,8 +57,7 @@ namespace TelePsy.BLL.Services
             psychologist.SessionRate = dto.SessionRate;
             psychologist.Bio = dto.Bio;
             psychologist.Hobbies = dto.Hobbies;
-            psychologist.BankAccountType = dto.BankAccountType;
-            psychologist.BankAccountNumber = dto.BankAccountNumber;
+            psychologist.PaymentAccount = dto.PaymentAccount;
 
             // Update Person fields
             if (psychologist.Person != null)

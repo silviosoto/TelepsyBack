@@ -384,7 +384,8 @@ namespace TelePsy.BLL.Services
                         IsPaidToPsychologist = appt.PsychologistInvoiceId != null,
                         PatientAttended = appt.PatientJoinedAt.HasValue,
                         PsychologistAttended = appt.PsychologistJoinedAt.HasValue,
-                        AppointmentId = appt.Id
+                        AppointmentId = appt.Id,
+                        PsychologistPaymentAccount = psychologist?.PaymentAccount
                     });
                 }
             }
@@ -449,7 +450,8 @@ namespace TelePsy.BLL.Services
                     TherapyName = p.Appointment.Therapy?.Name,
                     PsychologistName = p.Appointment.Psychologist?.Person != null 
                         ? $"{p.Appointment.Psychologist.Person.FirstName} {p.Appointment.Psychologist.Person.LastName}" 
-                        : "N/A"
+                        : "N/A",
+                    PsychologistPaymentAccount = p.Appointment?.Psychologist?.PaymentAccount
                 })
                 .ToList();
 
