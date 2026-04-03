@@ -252,6 +252,26 @@ namespace TelePsy.API.Controllers
             }
         }
 
+        [HttpGet("payments/all")]
+        public async Task<IActionResult> GetAllPayments([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? identification = null, [FromQuery] string? status = null, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
+        {
+            try
+            {
+                var (payments, totalCount) = await _adminService.GetAllPaymentsAsync(page, pageSize, search, identification, status, startDate, endDate);
+                return Ok(new
+                {
+                    Data = payments,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                });
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("payments/payout")]
         public async Task<IActionResult> ProcessPsychologistPayout([FromBody] PsychologistPayoutRequestDto request)
         {
@@ -259,6 +279,20 @@ namespace TelePsy.API.Controllers
             {
                 await _adminService.ProcessPsychologistPayoutAsync(request);
                 return Ok(new { Message = "Payout processed successfully" });
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("payments/{id}/mark-paid")]
+        public async Task<IActionResult> MarkPaymentAsPaid(int id)
+        {
+            try
+            {
+                await _adminService.MarkPaymentAsPaidAsync(id);
+                return Ok(new { Message = "Payment marked as paid manually" });
             }
             catch (System.Exception ex)
             {

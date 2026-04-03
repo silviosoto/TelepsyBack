@@ -15,12 +15,16 @@ namespace TelePsy.BLL.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditService _auditService;
         private readonly IInvoiceService _invoiceService;
+        private readonly IEmailService _emailService;
+        private readonly IVideoService _videoService;
 
-        public AdminService(IUnitOfWork unitOfWork, IAuditService auditService, IInvoiceService invoiceService)
+        public AdminService(IUnitOfWork unitOfWork, IAuditService auditService, IInvoiceService invoiceService, IEmailService emailService, IVideoService videoService)
         {
             _unitOfWork = unitOfWork;
             _auditService = auditService;
             _invoiceService = invoiceService;
+            _emailService = emailService;
+            _videoService = videoService;
         }
 
         public async Task<IEnumerable<Psychologist>> GetPendingPsychologistsAsync()
@@ -388,12 +392,146 @@ namespace TelePsy.BLL.Services
             return result.OrderByDescending(r => r.Date);
         }
 
+        public async Task<(IEnumerable<AdminPaymentViewDto> Payments, int TotalCount)> GetAllPaymentsAsync(int page = 1, int pageSize = 10, string? searchTerm = null, string? patientIdentification = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            var query = await _unitOfWork.Repository<Payment>().GetAsync(
+                includeProperties: "Appointment,Appointment.Patient,Appointment.Patient.Person,Appointment.Therapy,Appointment.Psychologist.Person"
+            );
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var lowerSearch = searchTerm.ToLower();
+                query = query.Where(p => 
+                    (p.Appointment.Patient.Person.FirstName.ToLower() + " " + p.Appointment.Patient.Person.LastName.ToLower()).Contains(lowerSearch) ||
+                    (p.TransactionId != null && p.TransactionId.ToLower().Contains(lowerSearch))
+                );
+            }
+
+            if (!string.IsNullOrEmpty(patientIdentification))
+            {
+                // Identification field does not exist in Person entity, searching in UserId (fallback)
+                var lowerId = patientIdentification.ToLower();
+                query = query.Where(p => p.Appointment.Patient.Person.UserId.ToLower().Contains(lowerId));
+            }
+
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                query = query.Where(p => p.Status.ToLower() == status.ToLower());
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(p => p.Date.Date >= startDate.Value.Date);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(p => p.Date.Date <= endDate.Value.Date);
+            }
+
+            int totalCount = query.Count();
+
+            var pagedData = query
+                .OrderByDescending(p => p.Date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new AdminPaymentViewDto
+                {
+                    PaymentId = p.Id,
+                    Date = p.Date,
+                    Amount = p.Amount,
+                    Status = p.Status,
+                    TransactionId = p.TransactionId,
+                    PatientId = p.Appointment.PatientId,
+                    PatientName = $"{p.Appointment.Patient.Person.FirstName} {p.Appointment.Patient.Person.LastName}",
+                    PatientIdentification = p.Appointment.Patient.Person.UserId, // Placeholder or specific field
+                    AppointmentId = p.AppointmentId,
+                    TherapyName = p.Appointment.Therapy?.Name,
+                    PsychologistName = p.Appointment.Psychologist?.Person != null 
+                        ? $"{p.Appointment.Psychologist.Person.FirstName} {p.Appointment.Psychologist.Person.LastName}" 
+                        : "N/A"
+                })
+                .ToList();
+
+            return (pagedData, totalCount);
+        }
+
         public async Task ProcessPsychologistPayoutAsync(PsychologistPayoutRequestDto request)
         {
             await _invoiceService.GeneratePsychologistPayoutAsync(request.PsychologistId, request.AppointmentIds);
             
             await _auditService.LogAsync("Admin", "Payout", "Invoice", 
                 request.PsychologistId.ToString(), $"Payout processed for {request.AppointmentIds.Count} appointments");
+        }
+
+        public async Task MarkPaymentAsPaidAsync(int paymentId)
+        {
+            var payment = await _unitOfWork.Repository<Payment>().GetByIdAsync(paymentId);
+            if (payment == null) throw new Exception("Payment not found");
+
+            if (payment.Status == "Completed") return; // Already processed
+
+            payment.Status = "Completed";
+            _unitOfWork.Repository<Payment>().Update(payment);
+
+            // Update associated invoice
+            var invoice = (await _unitOfWork.Repository<Invoice>().GetAsync(i => i.PaymentId == payment.Id)).FirstOrDefault();
+            if (invoice != null)
+            {
+                invoice.Status = InvoiceStatus.Paid;
+                _unitOfWork.Repository<Invoice>().Update(invoice);
+            }
+
+            // Update associated appointment
+            var appointment = (await _unitOfWork.Repository<Appointment>().GetAsync(
+                a => a.Id == payment.AppointmentId,
+                includeProperties: "Patient.Person,Psychologist.Person.User,Therapy,SessionPackage"
+            )).FirstOrDefault();
+
+            if (appointment != null)
+            {
+                appointment.Status = AppointmentStatus.Confirmed;
+
+                if (appointment.SessionPackage != null)
+                {
+                    appointment.SessionPackage.IsActive = true;
+                    appointment.SessionPackage.PaymentId = payment.Id;
+                    _unitOfWork.Repository<SessionPackage>().Update(appointment.SessionPackage);
+                }
+
+                // Generate Zoom link if it's an online session and doesn't have one
+                if (string.IsNullOrEmpty(appointment.VideoLink))
+                {
+                    try
+                    {
+                        string zoomLink = await _videoService.GenerateMeetingLinkAsync(appointment);
+                        appointment.VideoLink = zoomLink;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error generating Zoom link: {ex.Message}");
+                        // Continue even if Zoom fails
+                    }
+                }
+
+                _unitOfWork.Repository<Appointment>().Update(appointment);
+
+                // Send email notifications
+                try
+                {
+                    await _emailService.SendAppointmentNotificationAsync(appointment);
+                    await _emailService.SendPaymentConfirmationAsync(appointment);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error sending email notifications: {ex.Message}");
+                }
+            }
+
+            await _unitOfWork.CompleteAsync();
+
+            await _auditService.LogAsync("Admin", "ManualPaid", "Payment", 
+                paymentId.ToString(), $"Payment marked as paid manually. Appointment: {payment.AppointmentId}");
         }
     }
 }

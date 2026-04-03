@@ -27,15 +27,29 @@ namespace TelePsy.BLL.Services
             _unitOfWork = unitOfWork;
             _emailService = emailService;
             _videoService = videoService;
-            _merchantId = configuration["PayU:MerchantId"] ?? string.Empty;
-            _apiKey = configuration["PayU:ApiKey"] ?? string.Empty;
-            _accountId = configuration["PayU:AccountId"] ?? string.Empty;
-            _testMode = configuration.GetValue("PayU:TestMode", true);
-            _checkoutUrl = configuration["PayU:CheckoutUrl"] ??
-                           (_testMode ? "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" : "https://checkout.payulatam.com/ppp-web-gateway-payu/");
-            _responseUrl = configuration["PayU:ResponseUrl"] ?? string.Empty;
-            _confirmationUrl = configuration["PayU:ConfirmationUrl"] ?? string.Empty;
+            _merchantId = "1026554";
+            _apiKey = "cuM8hUU8eooHoNNQKbcZFajZii";
+            _accountId = "1035772";
+            _testMode = false;
+            _checkoutUrl = "https://checkout.payulatam.com/ppp-web-gateway-payu/";
+            _responseUrl = "http://localhost:3000/payment/response";
+            _confirmationUrl = "https://1e3d-191-95-131-132.ngrok-free.app/api/payment/confirmation";
         }
+
+        // public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IVideoService videoService)
+        // {
+        //     _unitOfWork = unitOfWork;
+        //     _emailService = emailService;
+        //     _videoService = videoService;
+        //     _merchantId = configuration["PayU:MerchantId"] ?? string.Empty;
+        //     _apiKey = configuration["PayU:ApiKey"] ?? string.Empty;
+        //     _accountId = configuration["PayU:AccountId"] ?? string.Empty;
+        //     _testMode = configuration.GetValue("PayU:TestMode", true);
+        //     _checkoutUrl = configuration["PayU:CheckoutUrl"] ??
+        //                    (_testMode ? "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" : "https://checkout.payulatam.com/ppp-web-gateway-payu/");
+        //     _responseUrl = configuration["PayU:ResponseUrl"] ?? string.Empty;
+        //     _confirmationUrl = configuration["PayU:ConfirmationUrl"] ?? string.Empty;
+        // }
 
         public async Task<string> CreatePaymentRequestAsync(int invoiceId)
         {
@@ -61,7 +75,7 @@ namespace TelePsy.BLL.Services
                 accountId = _accountId,
                 description = $"Payment for Invoice {invoice.InvoiceNumber}",
                 referenceCode,
-                amount = amount.ToString("F0", CultureInfo.InvariantCulture),
+                amount = FormatAmount(amount),
                 tax = 0,
                 taxReturnBase = 0,
                 signature,
@@ -247,11 +261,9 @@ namespace TelePsy.BLL.Services
         private string FormatAmount(decimal amount)
         {
             // PayU signature requires specific formatting. 
-            // If it has decimals, include one. If it's integer, no decimals (usually).
-            // This can be tricky depending on the currency. For COP, usually no decimals.
-            string amountStr = amount.ToString("F1", CultureInfo.InvariantCulture);
-            if (amountStr.EndsWith(".0")) amountStr = amount.ToString("F0", CultureInfo.InvariantCulture);
-            return amountStr;
+            // For COP, it is recommended to use no decimals and the same string 
+            // must be used in the 'amount' field and in the signature.
+            return Math.Round(amount).ToString("F0", CultureInfo.InvariantCulture);
         }
 
         private string ComputeMd5(string input)

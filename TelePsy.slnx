@@ -3,4 +3,8 @@
   <Project Path="TelePsy.BLL/TelePsy.BLL.csproj" />
   <Project Path="TelePsy.DAL/TelePsy.DAL.csproj" />
   <Project Path="TelePsy.Domain/TelePsy.Domain.csproj" />
+  <Project Path="TelePsyDB/TelePsyDB.sqlproj" Id="9e445248-a2b0-4933-b28f-3e6cf3759cf5">
+    <Build />
+    <Deploy />
+  </Project>
 </Solution>

@@ -57,6 +57,8 @@ namespace TelePsy.BLL.Services
             psychologist.SessionRate = dto.SessionRate;
             psychologist.Bio = dto.Bio;
             psychologist.Hobbies = dto.Hobbies;
+            psychologist.BankAccountType = dto.BankAccountType;
+            psychologist.BankAccountNumber = dto.BankAccountNumber;
 
             // Update Person fields
             if (psychologist.Person != null)
@@ -67,6 +69,8 @@ namespace TelePsy.BLL.Services
                 psychologist.Person.State = dto.State;
                 psychologist.Person.PhoneNumber = dto.PhoneNumber;
                 psychologist.Person.Gender = dto.Gender;
+                psychologist.Person.DocumentType = dto.DocumentType;
+                psychologist.Person.DocumentNumber = dto.DocumentNumber;
                 
                 _unitOfWork.Repository<Person>().Update(psychologist.Person);
             }

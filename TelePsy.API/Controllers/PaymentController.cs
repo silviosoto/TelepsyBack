@@ -19,7 +19,7 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpGet("checkout/{invoiceId}")]
-        [Authorize]
+        
         public async Task<IActionResult> GetCheckoutData(int invoiceId)
         {
             try

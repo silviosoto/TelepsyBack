@@ -33,6 +33,8 @@ namespace TelePsy.BLL.Services
                 LastName = person.LastName,
                 DateOfBirth = person.DateOfBirth,
                 Gender = person.Gender,
+                DocumentType = person.DocumentType,
+                DocumentNumber = person.DocumentNumber,
                 City = person.City,
                 Hobbies = patient?.Interests
             };
@@ -54,6 +56,8 @@ namespace TelePsy.BLL.Services
                 person.DateOfBirth = dto.DateOfBirth.Value;
             }
             person.Gender = dto.Gender ?? string.Empty;
+            person.DocumentType = dto.DocumentType;
+            person.DocumentNumber = dto.DocumentNumber;
             person.City = dto.City ?? string.Empty;
 
             _unitOfWork.Repository<Person>().Update(person);
