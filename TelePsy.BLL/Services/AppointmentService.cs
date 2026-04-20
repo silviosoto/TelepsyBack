@@ -228,11 +228,14 @@ namespace TelePsy.BLL.Services
                     );
 
                     // Check if slot has appointment
+                    // Lazy Release: Ignore Pending appointments older than 15 minutes
+                    var expirationLimit = DateTime.UtcNow.AddMinutes(-15);
                     var appointments = await _unitOfWork.Repository<Appointment>().GetAsync(a =>
                         a.PsychologistId == psychologistId &&
                         a.ScheduledTime < slotEnd &&
                         a.ScheduledTime.AddMinutes(a.DurationMinutes) > slotStart &&
-                        a.Status != AppointmentStatus.Cancelled
+                        a.Status != AppointmentStatus.Cancelled &&
+                        !(a.Status == AppointmentStatus.Pending && a.CreatedAt < expirationLimit)
                     );
 
                     if (!blockedSlots.Any() && !appointments.Any())
@@ -275,10 +278,13 @@ namespace TelePsy.BLL.Services
             if (patient == null) throw new Exception("Patient profile not found.");
 
             // 2. Validate availability (simple check for now)
+            // Lazy Release: Ignore Pending appointments older than 15 minutes
+            var expirationLimit = DateTime.UtcNow.AddMinutes(-15);
             var isBusy = (await _unitOfWork.Repository<Appointment>().GetAsync(a =>
                 a.PsychologistId == dto.PsychologistId &&
                 a.ScheduledTime == dto.ScheduledTime &&
-                a.Status != AppointmentStatus.Cancelled)).Any();
+                a.Status != AppointmentStatus.Cancelled &&
+                !(a.Status == AppointmentStatus.Pending && a.CreatedAt < expirationLimit))).Any();
 
             if (isBusy) throw new Exception("The selected time slot is no longer available.");
 
@@ -291,7 +297,8 @@ namespace TelePsy.BLL.Services
                 ScheduledTime = dto.ScheduledTime,
                 DurationMinutes = 45, // Default
                 Status = AppointmentStatus.Pending,
-                VideoLink = string.Empty // Will be generated after payment
+                VideoLink = string.Empty, // Will be generated after payment
+                CreatedAt = DateTime.UtcNow
             };
 
             // Calculate rate

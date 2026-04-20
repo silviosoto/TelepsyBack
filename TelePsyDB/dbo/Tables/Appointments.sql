@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[Appointments] (
+CREATE TABLE [dbo].[Appointments] (
     [Id]                    INT             IDENTITY (1, 1) NOT NULL,
     [PatientId]             INT             NOT NULL,
     [PsychologistId]        INT             NOT NULL,
@@ -13,6 +13,7 @@
     [PatientJoinedAt]       DATETIME2 (7)   NULL,
     [PsychologistJoinedAt]  DATETIME2 (7)   NULL,
     [SessionPackageId]      INT             NULL,
+    [CreatedAt]             DATETIME2 (7)   DEFAULT (GETUTCDATE()) NOT NULL,
     CONSTRAINT [PK_Appointments] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_Appointments_Invoices_PsychologistInvoiceId] FOREIGN KEY ([PsychologistInvoiceId]) REFERENCES [dbo].[Invoices] ([Id]),
     CONSTRAINT [FK_Appointments_Patients_PatientId] FOREIGN KEY ([PatientId]) REFERENCES [dbo].[Patients] ([Id]),

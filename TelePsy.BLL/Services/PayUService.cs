@@ -22,34 +22,34 @@ namespace TelePsy.BLL.Services
         private readonly string _confirmationUrl;
         private readonly bool _testMode;
 
-        public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IVideoService videoService)
-        {
-            _unitOfWork = unitOfWork;
-            _emailService = emailService;
-            _videoService = videoService;
-            _merchantId = "1026554";
-            _apiKey = "cuM8hUU8eooHoNNQKbcZFajZii";
-            _accountId = "1035772";
-            _testMode = false;
-            _checkoutUrl = "https://checkout.payulatam.com/ppp-web-gateway-payu/";
-            _responseUrl = "http://localhost:3000/payment/response";
-            _confirmationUrl = "https://1e3d-191-95-131-132.ngrok-free.app/api/payment/confirmation";
-        }
-
         // public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IVideoService videoService)
         // {
         //     _unitOfWork = unitOfWork;
         //     _emailService = emailService;
         //     _videoService = videoService;
-        //     _merchantId = configuration["PayU:MerchantId"] ?? string.Empty;
-        //     _apiKey = configuration["PayU:ApiKey"] ?? string.Empty;
-        //     _accountId = configuration["PayU:AccountId"] ?? string.Empty;
-        //     _testMode = configuration.GetValue("PayU:TestMode", true);
-        //     _checkoutUrl = configuration["PayU:CheckoutUrl"] ??
-        //                    (_testMode ? "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" : "https://checkout.payulatam.com/ppp-web-gateway-payu/");
-        //     _responseUrl = configuration["PayU:ResponseUrl"] ?? string.Empty;
-        //     _confirmationUrl = configuration["PayU:ConfirmationUrl"] ?? string.Empty;
+        //     _merchantId = "1026554";
+        //     _apiKey = "cuM8hUU8eooHoNNQKbcZFajZii";
+        //     _accountId = "1035772";
+        //     _testMode = false;
+        //     _checkoutUrl = "https://checkout.payulatam.com/ppp-web-gateway-payu/";
+        //     _responseUrl = "http://localhost:3000/payment/response";
+        //     _confirmationUrl = "https://1e3d-191-95-131-132.ngrok-free.app/api/payment/confirmation";
         // }
+
+        public PayUService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IVideoService videoService)
+        {
+            _unitOfWork = unitOfWork;
+            _emailService = emailService;
+            _videoService = videoService;
+            _merchantId = configuration["PayU:MerchantId"] ?? string.Empty;
+            _apiKey = configuration["PayU:ApiKey"] ?? string.Empty;
+            _accountId = configuration["PayU:AccountId"] ?? string.Empty;
+            _testMode = configuration.GetValue("PayU:TestMode", true);
+            _checkoutUrl = configuration["PayU:CheckoutUrl"] ??
+                           (_testMode ? "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" : "https://checkout.payulatam.com/ppp-web-gateway-payu/");
+            _responseUrl = configuration["PayU:ResponseUrl"] ?? string.Empty;
+            _confirmationUrl = configuration["PayU:ConfirmationUrl"] ?? string.Empty;
+        }
 
         public async Task<string> CreatePaymentRequestAsync(int invoiceId)
         {
@@ -79,7 +79,7 @@ namespace TelePsy.BLL.Services
                 tax = 0,
                 taxReturnBase = 0,
                 signature,
-                test = _testMode ? 1 : 0, 
+                test = _testMode ? 1 : 0,
                 buyerEmail = invoice.Patient.Person.User.Email ?? "buyer@test.com",
                 currency = "COP",
                 responseUrl = _responseUrl,
@@ -89,7 +89,7 @@ namespace TelePsy.BLL.Services
 
             // Check if a payment already exists for this appointment
             var existingPayment = (await _unitOfWork.Repository<Payment>().GetAsync(p => p.AppointmentId == appointmentId)).FirstOrDefault();
-            
+
             Payment paymentToSave;
             if (existingPayment != null && existingPayment.Status == "Pending")
             {
@@ -122,7 +122,7 @@ namespace TelePsy.BLL.Services
             // Link invoice to payment after saving the payment to ensure we have a valid ID
             if (invoice.PaymentId != paymentToSave.Id)
             {
-                invoice.PaymentId = paymentToSave.Id; 
+                invoice.PaymentId = paymentToSave.Id;
                 _unitOfWork.Repository<Invoice>().Update(invoice);
                 await _unitOfWork.CompleteAsync();
             }
@@ -141,12 +141,12 @@ namespace TelePsy.BLL.Services
             if (!string.Equals(expectedSignature, data.Signature, StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine($"Invalid Signature. Expected: {expectedSignature}, Received: {data.Signature}");
-                return false; 
+                return false;
             }
 
             var payment = (await _unitOfWork.Repository<Payment>().GetAsync(p => p.TransactionId == data.ReferenceCode))
                 .FirstOrDefault();
-            
+
             if (payment == null)
             {
                 Console.WriteLine($"Payment with reference {data.ReferenceCode} not found.");
@@ -188,7 +188,7 @@ namespace TelePsy.BLL.Services
                         appointment.SessionPackage.PaymentId = payment.Id;
                         _unitOfWork.Repository<SessionPackage>().Update(appointment.SessionPackage);
                     }
-                    
+
                     // Generate Zoom link if it's an online session
                     try
                     {

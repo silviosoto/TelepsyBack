@@ -150,11 +150,11 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpGet("available-slots/{psychologistId}")]
-        public async Task<IActionResult> GetAvailableSlots(int psychologistId, [FromQuery] DateTime date)
+        public async Task<IActionResult> GetAvailableSlots(int psychologistId, [FromQuery] DateTime date, [FromQuery] int durationMinutes = 45)
         {
             try
             {
-                var result = await _appointmentService.GetAvailableSlotsAsync(psychologistId, date);
+                var result = await _appointmentService.GetAvailableSlotsAsync(psychologistId, date, durationMinutes);
                 return Ok(result);
             }
             catch (Exception ex)
