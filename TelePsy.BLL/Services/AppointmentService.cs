@@ -89,10 +89,55 @@ namespace TelePsy.BLL.Services
                 includeProperties: "Psychologist.Person,Therapy");
         }
 
-        public async Task<IEnumerable<Appointment>> GetAppointmentsForPsychologistAsync(int psychologistId)
+        public async Task<IEnumerable<PsychologistAppointmentDto>> GetAppointmentsForPsychologistAsync(int psychologistId)
         {
-            return await _unitOfWork.Repository<Appointment>().GetAsync(a => a.PsychologistId == psychologistId,
-                includeProperties: "Patient.Person,Psychologist.Person,SessionPackage");
+            try
+            {
+                var appointments = await _unitOfWork.Repository<Appointment>().GetAsync(
+                    a => a.PsychologistId == psychologistId,
+                    includeProperties: "Patient.Person,Therapy,SessionPackage"
+                );
+
+                var appointmentDtos = appointments.Select(a => new PsychologistAppointmentDto
+                {
+                    Id = a.Id,
+                    PatientId = a.PatientId,
+                    Patient = a.Patient == null ? null : new PatientSummaryDto
+                    {
+                        Id = a.Patient.Id,
+                        Person = a.Patient.Person == null ? null : new PersonSummaryDto
+                        {
+                            FirstName = a.Patient.Person.FirstName,
+                            LastName = a.Patient.Person.LastName
+                        }
+                    },
+                    TherapyId = a.TherapyId,
+                    TherapyName = a.Therapy?.Name,
+                    ScheduledTime = a.ScheduledTime,
+                    DurationMinutes = a.DurationMinutes,
+                    Status = (int)a.Status,
+                    VideoLink = a.VideoLink,
+                    IsPackage = a.SessionPackageId.HasValue,
+                    SessionPackageId = a.SessionPackageId
+                }).ToList();
+
+                System.Console.WriteLine($"[AppointmentService] Retrieved {appointmentDtos.Count} psychologist appointments for psychologistId {psychologistId}");
+
+                return appointmentDtos;
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"[AppointmentService] ERROR in GetAppointmentsForPsychologistAsync for psychologistId {psychologistId}:");
+                System.Console.WriteLine($"[AppointmentService] Message: {ex.Message}");
+                System.Console.WriteLine($"[AppointmentService] StackTrace: {ex.StackTrace}");
+
+                if (ex.InnerException != null)
+                {
+                    System.Console.WriteLine($"[AppointmentService] InnerException: {ex.InnerException.Message}");
+                }
+
+                throw new Exception($"Error retrieving appointments for psychologist {psychologistId}: {ex.Message}", ex);
+            }
         }
 
         public async Task CancelAppointmentAsync(int appointmentId)
@@ -117,6 +162,52 @@ namespace TelePsy.BLL.Services
                 {
                     Console.WriteLine($"Error sending cancellation email: {ex.Message}");
                 }
+            }
+        }
+
+        public async Task MarkAppointmentAsCompletedAsync(int appointmentId)
+        {
+            var appointment = await _unitOfWork.Repository<Appointment>().GetFirstOrDefaultAsync(
+                a => a.Id == appointmentId,
+                includeProperties: "Patient.Person.User,Psychologist.Person.User"
+            );
+
+            if (appointment == null) throw new Exception("Appointment not found");
+
+            appointment.Status = AppointmentStatus.Completed;
+            _unitOfWork.Repository<Appointment>().Update(appointment);
+            await _unitOfWork.CompleteAsync();
+
+            try
+            {
+                await _emailService.SendAppointmentChangeNotificationAsync(appointment, "Cita Completada", "System");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending completed email: {ex.Message}");
+            }
+        }
+
+        public async Task MarkAppointmentAsNoShowAsync(int appointmentId)
+        {
+            var appointment = await _unitOfWork.Repository<Appointment>().GetFirstOrDefaultAsync(
+                a => a.Id == appointmentId,
+                includeProperties: "Patient.Person.User,Psychologist.Person.User"
+            );
+
+            if (appointment == null) throw new Exception("Appointment not found");
+
+            appointment.Status = AppointmentStatus.NoShow;
+            _unitOfWork.Repository<Appointment>().Update(appointment);
+            await _unitOfWork.CompleteAsync();
+
+            try
+            {
+                await _emailService.SendAppointmentChangeNotificationAsync(appointment, "No asistió a la cita", "System");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending no-show email: {ex.Message}");
             }
         }
 

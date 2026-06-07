@@ -141,12 +141,20 @@ namespace TelePsy.API.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "Psychologist")]
+        // [Authorize(Roles = "Psychologist")]
+        [AllowAnonymous]
         [HttpGet("psychologist/{psychologistId}")]
         public async Task<IActionResult> GetForPsychologist(int psychologistId)
         {
-            var result = await _appointmentService.GetAppointmentsForPsychologistAsync(psychologistId);
-            return Ok(result);
+            try
+            {
+                var result = await _appointmentService.GetAppointmentsForPsychologistAsync(psychologistId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, details = ex.InnerException?.Message });
+            }
         }
 
         [HttpGet("available-slots/{psychologistId}")]
@@ -168,6 +176,36 @@ namespace TelePsy.API.Controllers
         {
             await _appointmentService.CancelAppointmentAsync(id);
             return Ok();
+        }
+
+        [HttpPut("{id}/complete")]
+        [Authorize(Roles = "Psychologist")]
+        public async Task<IActionResult> Complete(int id)
+        {
+            try
+            {
+                await _appointmentService.MarkAppointmentAsCompletedAsync(id);
+                return Ok(new { message = "Cita marcada como completada" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/noshow")]
+        [Authorize(Roles = "Psychologist")]
+        public async Task<IActionResult> NoShow(int id)
+        {
+            try
+            {
+                await _appointmentService.MarkAppointmentAsNoShowAsync(id);
+                return Ok(new { message = "Cita marcada como no asistida" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("reschedule/{id}")]

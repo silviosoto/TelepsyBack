@@ -41,4 +41,31 @@ namespace TelePsy.Domain.DTOs
         public bool IsPackage { get; set; }
         public int? SessionPackageId { get; set; }
     }
+
+    public class PersonSummaryDto
+    {
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+    }
+
+    public class PatientSummaryDto
+    {
+        public int Id { get; set; }
+        public PersonSummaryDto? Person { get; set; }
+    }
+
+    public class PsychologistAppointmentDto
+    {
+        public int Id { get; set; }
+        public int PatientId { get; set; }
+        public PatientSummaryDto? Patient { get; set; }
+        public int TherapyId { get; set; }
+        public string? TherapyName { get; set; }
+        public DateTime ScheduledTime { get; set; }
+        public int DurationMinutes { get; set; }
+        public int Status { get; set; }
+        public string? VideoLink { get; set; }
+        public bool IsPackage { get; set; }
+        public int? SessionPackageId { get; set; }
+    }
 }

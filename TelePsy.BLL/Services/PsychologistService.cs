@@ -36,7 +36,7 @@ namespace TelePsy.BLL.Services
                 includeProperties: "Person.User,Therapies.Therapy,Specialties.Specialty"
             )).FirstOrDefault();
 
-            if (psychologist != null) await ResolvePsychologistUrlsAsync(psychologist);
+            // if (psychologist != null) await ResolvePsychologistUrlsAsync(psychologist);
             return psychologist;
         }
 
@@ -101,12 +101,12 @@ namespace TelePsy.BLL.Services
 
         private async Task ResolvePsychologistUrlsAsync(Psychologist p)
         {
-            if (!string.IsNullOrEmpty(p.ProfilePicturePath))
+            if (!string.IsNullOrEmpty(p.ProfilePicturePath) && !p.ProfilePicturePath.StartsWith("http"))
             {
                 p.ProfilePicturePath = await _fileStorageService.GetFileUrlAsync(p.ProfilePicturePath, "profile-pictures");
             }
 
-            if (!string.IsNullOrEmpty(p.CvPath))
+            if (!string.IsNullOrEmpty(p.CvPath) && !p.CvPath.StartsWith("http"))
             {
                 p.CvPath = await _fileStorageService.GetFileUrlAsync(p.CvPath, "cvs");
             }

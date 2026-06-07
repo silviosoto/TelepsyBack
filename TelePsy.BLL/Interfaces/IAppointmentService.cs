@@ -11,9 +11,11 @@ namespace TelePsy.BLL.Interfaces
         Task<Appointment> CreateAppointmentAsync(Appointment appointment);
         Task<IEnumerable<Appointment>> GetAppointmentsForPatientAsync(int patientId);
         Task<IEnumerable<Appointment>> GetPatientAppointmentsByUserIdAsync(string userId);
-        Task<IEnumerable<Appointment>> GetAppointmentsForPsychologistAsync(int psychologistId);
+        Task<IEnumerable<PsychologistAppointmentDto>> GetAppointmentsForPsychologistAsync(int psychologistId);
         Task<IEnumerable<SessionPackage>> GetActivePackagesForPatientAsync(string userId);
         Task CancelAppointmentAsync(int appointmentId);
+        Task MarkAppointmentAsCompletedAsync(int appointmentId);
+        Task MarkAppointmentAsNoShowAsync(int appointmentId);
         Task RescheduleAppointmentAsync(int appointmentId, DateTime newDate);
         Task<IEnumerable<WorkScheduleDto>> GetWorkScheduleAsync(int psychologistId);
 
