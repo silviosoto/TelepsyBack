@@ -38,6 +38,11 @@ namespace TelePsy.BLL.Services
 
         public async Task SetRateAsync(int psychologistId, SetRateDto dto)
         {
+            if (dto.Rate < 60000m)
+            {
+                throw new ArgumentException("La tarifa mínima para un servicio es de $60.000 COP.");
+            }
+
             // Check if relationship already exists
             var existing = await _unitOfWork.Repository<PsychologistTherapy>().GetFirstOrDefaultAsync(
                 pt => pt.PsychologistId == psychologistId && pt.TherapyId == dto.TherapyId

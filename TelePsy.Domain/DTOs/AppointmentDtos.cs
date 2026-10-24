@@ -8,6 +8,7 @@ namespace TelePsy.Domain.DTOs
         public int TherapyId { get; set; }
         public DateTime ScheduledTime { get; set; }
         public int? PackageSessions { get; set; }
+        public string? ReasonForConsultation { get; set; }
     }
 
     public class BookingResponseDto
@@ -40,6 +41,7 @@ namespace TelePsy.Domain.DTOs
         public string? VideoLink { get; set; }
         public bool IsPackage { get; set; }
         public int? SessionPackageId { get; set; }
+        public string? ReasonForConsultation { get; set; }
     }
 
     public class PersonSummaryDto
@@ -67,5 +69,6 @@ namespace TelePsy.Domain.DTOs
         public string? VideoLink { get; set; }
         public bool IsPackage { get; set; }
         public int? SessionPackageId { get; set; }
+        public string? ReasonForConsultation { get; set; }
     }
 }

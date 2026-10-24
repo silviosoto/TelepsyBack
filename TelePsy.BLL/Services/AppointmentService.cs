@@ -118,7 +118,8 @@ namespace TelePsy.BLL.Services
                     Status = (int)a.Status,
                     VideoLink = a.VideoLink,
                     IsPackage = a.SessionPackageId.HasValue,
-                    SessionPackageId = a.SessionPackageId
+                    SessionPackageId = a.SessionPackageId,
+                    ReasonForConsultation = a.ReasonForConsultation
                 }).ToList();
 
                 System.Console.WriteLine($"[AppointmentService] Retrieved {appointmentDtos.Count} psychologist appointments for psychologistId {psychologistId}");
@@ -220,8 +221,9 @@ namespace TelePsy.BLL.Services
 
             if (appointment == null) throw new Exception("Appointment not found");
 
-            // Validation: Max 1 month from original date
-            var limitDate = appointment.ScheduledTime.AddMonths(1);
+            // Validation: Max 1 month from scheduled date or current date
+            var baseDate = appointment.ScheduledTime > DateTime.UtcNow ? appointment.ScheduledTime : DateTime.UtcNow;
+            var limitDate = baseDate.AddMonths(1);
             if (newDate > limitDate)
             {
                 throw new Exception("La nueva fecha no puede ser superior a un mes de la fecha original.");
@@ -230,6 +232,22 @@ namespace TelePsy.BLL.Services
             if (newDate < DateTime.UtcNow)
             {
                 throw new Exception("La nueva fecha debe ser en el futuro.");
+            }
+
+            // Validation: Check for conflict with other appointments of the psychologist
+            var duration = appointment.DurationMinutes > 0 ? appointment.DurationMinutes : 60;
+            var endTime = newDate.AddMinutes(duration);
+            var conflicting = await _unitOfWork.Repository<Appointment>().GetFirstOrDefaultAsync(a =>
+                a.Id != appointmentId &&
+                a.PsychologistId == appointment.PsychologistId &&
+                (a.Status == AppointmentStatus.Confirmed || a.Status == AppointmentStatus.Pending) &&
+                a.ScheduledTime < endTime &&
+                a.ScheduledTime.AddMinutes(a.DurationMinutes > 0 ? a.DurationMinutes : 60) > newDate
+            );
+
+            if (conflicting != null)
+            {
+                throw new Exception("Ya existe una cita programada para el psicólogo en ese horario.");
             }
 
             appointment.ScheduledTime = newDate;
@@ -389,6 +407,7 @@ namespace TelePsy.BLL.Services
                 DurationMinutes = 45, // Default
                 Status = AppointmentStatus.Pending,
                 VideoLink = string.Empty, // Will be generated after payment
+                ReasonForConsultation = dto.ReasonForConsultation?.Trim(),
                 CreatedAt = DateTime.UtcNow
             };
 

@@ -89,7 +89,8 @@ namespace TelePsy.API.Controllers
                     Status = (int)a.Status,
                     VideoLink = a.VideoLink,
                     IsPackage = a.SessionPackageId.HasValue,
-                    SessionPackageId = a.SessionPackageId
+                    SessionPackageId = a.SessionPackageId,
+                    ReasonForConsultation = a.ReasonForConsultation
                 });
 
                 return Ok(dtos);
@@ -209,6 +210,7 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpPut("reschedule/{id}")]
+        [Authorize(Roles = "Patient,Psychologist")]
         public async Task<IActionResult> Reschedule(int id, [FromBody] RescheduleDto dto)
         {
             try

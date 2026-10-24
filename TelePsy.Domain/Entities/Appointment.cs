@@ -36,6 +36,8 @@ namespace TelePsy.Domain.Entities
         public int? SessionPackageId { get; set; }
         public SessionPackage? SessionPackage { get; set; }
 
+        public string? ReasonForConsultation { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

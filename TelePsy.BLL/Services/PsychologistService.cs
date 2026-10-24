@@ -188,6 +188,11 @@ namespace TelePsy.BLL.Services
 
         public async Task UpdatePsychologistServiceAsync(int psychologistId, UpdatePsychologistServiceDto dto)
         {
+            if (dto.IsActive && dto.Rate < 60000m)
+            {
+                throw new ArgumentException("La tarifa mínima para un servicio es de $60.000 COP.");
+            }
+
             var existing = (await _unitOfWork.Repository<PsychologistTherapy>().GetAsync(
                 pt => pt.PsychologistId == psychologistId && pt.TherapyId == dto.TherapyId
             )).FirstOrDefault();

@@ -13,6 +13,7 @@ CREATE TABLE [dbo].[Appointments] (
     [PatientJoinedAt]       DATETIME2 (7)   NULL,
     [PsychologistJoinedAt]  DATETIME2 (7)   NULL,
     [SessionPackageId]      INT             NULL,
+    [ReasonForConsultation] NVARCHAR (MAX)  NULL,
     [CreatedAt]             DATETIME2 (7)   DEFAULT (GETUTCDATE()) NOT NULL,
     CONSTRAINT [PK_Appointments] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_Appointments_Invoices_PsychologistInvoiceId] FOREIGN KEY ([PsychologistInvoiceId]) REFERENCES [dbo].[Invoices] ([Id]),

@@ -57,7 +57,7 @@ namespace TelePsy.BLL.Services
                 i => i.Id == invoiceId,
                 includeProperties: "Patient.Person.User,Details"
             )).FirstOrDefault();
-
+            string  paymentMethods = "VISA,VISA_DEBIT,MASTERCARD,AMEX,PSE,NEQUI,BANCOLOMBIA_BUTTON";
             if (invoice == null) throw new Exception("Invoice not found");
 
             var appointmentId = invoice.Details.FirstOrDefault()?.AppointmentId ?? 0;
@@ -67,7 +67,7 @@ namespace TelePsy.BLL.Services
             string currency = "COP";
             decimal amount = invoice.TotalAmount;
 
-            string signature = GenerateRequestSignature(referenceCode, amount, currency);
+            string signature = GenerateRequestSignature(referenceCode, amount, currency, paymentMethods );
 
             var requestData = new
             {
@@ -79,6 +79,7 @@ namespace TelePsy.BLL.Services
                 tax = 0,
                 taxReturnBase = 0,
                 signature,
+                paymentMethods,
                 test = _testMode ? 1 : 0,
                 buyerEmail = invoice.Patient.Person.User.Email ?? "buyer@test.com",
                 currency = "COP",
@@ -241,11 +242,14 @@ namespace TelePsy.BLL.Services
             return true;
         }
 
-        private string GenerateRequestSignature(string referenceCode, decimal amount, string currency)
+        private string GenerateRequestSignature(string referenceCode, 
+            decimal amount, 
+            string currency,
+            string paymentMethods)
         {
             // Request Signature: ApiKey~merchantId~referenceCode~amount~currency
             string amountStr = FormatAmount(amount);
-            string rawSignature = $"{_apiKey}~{_merchantId}~{referenceCode}~{amountStr}~{currency}";
+            string rawSignature = $"{_apiKey}~{_merchantId}~{referenceCode}~{amountStr}~{currency}~{paymentMethods}";
             return ComputeMd5(rawSignature);
         }
 
