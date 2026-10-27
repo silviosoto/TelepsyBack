@@ -97,7 +97,10 @@ namespace TelePsy.BLL.Services
                 Gender = patient.Person?.Gender,
                 DocumentType = patient.Person?.DocumentType,
                 DocumentNumber = patient.Person?.DocumentNumber,
-                City = patient.Person?.City
+                Address = patient.Person?.Address,
+                City = patient.Person?.City,
+                Occupation = patient.Occupation,
+                EmergencyContact = patient.EmergencyContact
             };
         }
     }

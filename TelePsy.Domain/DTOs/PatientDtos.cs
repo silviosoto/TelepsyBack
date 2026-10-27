@@ -38,5 +38,8 @@ namespace TelePsy.Domain.DTOs
         public string? DocumentType { get; set; }
         public string? DocumentNumber { get; set; }
         public string? City { get; set; }
+        public string? Address { get; set; }
+        public string? Occupation { get; set; }
+        public string? EmergencyContact { get; set; }
     }
 }
