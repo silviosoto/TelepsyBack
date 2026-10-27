@@ -59,5 +59,21 @@ namespace TelePsy.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var patient = await _patientService.GetPatientByIdAsync(id);
+                if (patient == null) return NotFound(new { message = "Paciente no encontrado" });
+                return Ok(patient);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

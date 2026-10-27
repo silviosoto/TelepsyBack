@@ -70,5 +70,10 @@ namespace TelePsy.Domain.DTOs
         public bool IsPackage { get; set; }
         public int? SessionPackageId { get; set; }
         public string? ReasonForConsultation { get; set; }
+        public bool HasClinicalHistory { get; set; }
+        public bool HasServiceAttentionRecord { get; set; }
+        public int? ServiceAttentionRecordId { get; set; }
+        public bool HasEvolutionNote { get; set; }
+        public int? EvolutionNoteId { get; set; }
     }
 }

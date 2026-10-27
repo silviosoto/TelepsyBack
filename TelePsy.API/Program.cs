@@ -121,6 +121,7 @@ builder.Services.Configure<ResendClientOptions>(options =>
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<IClinicalRecordService, ClinicalRecordService>();
 builder.Services.AddScoped<IPsychologyNoteService, PsychologyNoteService>();
+builder.Services.AddScoped<IServiceAttentionRecordService, ServiceAttentionRecordService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IPsychologistService, PsychologistService>();

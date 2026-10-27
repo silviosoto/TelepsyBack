@@ -29,13 +29,26 @@ namespace TelePsy.API.Controllers
             return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
+        [HttpGet("exists/{patientId}")]
+        public async Task<IActionResult> CheckPatientHistoryExists(int patientId)
+        {
+            try
+            {
+                var hasHistory = await _clinicalRecordService.HasHistoryForPatientAsync(patientId);
+                return Ok(new { exists = hasHistory });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("{patientId}")]
         public async Task<IActionResult> GetPatientHistory(int patientId)
         {
             try
             {
-                var records = await _clinicalRecordService.GetRecordsForPatientAsync(patientId);
-                var latestRecord = records.OrderByDescending(r => r.Date).FirstOrDefault();
+                var latestRecord = await _clinicalRecordService.GetLatestRecordForPatientAsync(patientId);
 
                 if (latestRecord == null)
                 {
@@ -55,7 +68,8 @@ namespace TelePsy.API.Controllers
         }
 
         [HttpPut("{patientId}")]
-        public async Task<IActionResult> UpdatePatientHistory(int patientId, [FromBody] JsonElement data)
+        [HttpPost("{patientId}")]
+        public async Task<IActionResult> SavePatientHistory(int patientId, [FromBody] JsonElement data)
         {
             try
             {
@@ -85,9 +99,9 @@ namespace TelePsy.API.Controllers
                     Notes = JsonSerializer.Serialize(data) // Save the whole JSON object
                 };
 
-                await _clinicalRecordService.CreateRecordAsync(newRecord);
+                await _clinicalRecordService.CreateOrUpdateRecordAsync(newRecord);
 
-                return Ok();
+                return Ok(new { success = true, message = "Historia clínica guardada exitosamente" });
             }
             catch (Exception ex)
             {

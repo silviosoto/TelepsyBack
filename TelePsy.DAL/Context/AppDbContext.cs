@@ -27,6 +27,7 @@ namespace TelePsy.DAL.Context
         public DbSet<Therapy> Therapies { get; set; }
         public DbSet<PsychologistTherapy> PsychologistTherapies { get; set; }
         public DbSet<PsychologyNote> PsychologyNotes { get; set; }
+        public DbSet<ServiceAttentionRecord> ServiceAttentionRecords { get; set; }
         public DbSet<Specialty> Specialties { get; set; }
         public DbSet<PsychologistSpecialty> PsychologistSpecialties { get; set; }
         public DbSet<Department> Departments { get; set; }
@@ -228,6 +229,35 @@ namespace TelePsy.DAL.Context
                 entity.HasOne(ps => ps.Specialty)
                     .WithMany(s => s.PsychologistSpecialties)
                     .HasForeignKey(ps => ps.SpecialtyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ServiceAttentionRecord Configuration
+            builder.Entity<ServiceAttentionRecord>(entity =>
+            {
+                entity.HasOne(r => r.Patient)
+                    .WithMany()
+                    .HasForeignKey(r => r.PatientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.Psychologist)
+                    .WithMany()
+                    .HasForeignKey(r => r.PsychologistId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.Therapy)
+                    .WithMany()
+                    .HasForeignKey(r => r.TherapyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.InitialAppointment)
+                    .WithMany()
+                    .HasForeignKey(r => r.InitialAppointmentId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasMany(r => r.EvolutionNotes)
+                    .WithOne(n => n.ServiceAttentionRecord)
+                    .HasForeignKey(n => n.ServiceAttentionRecordId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

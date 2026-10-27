@@ -71,5 +71,34 @@ namespace TelePsy.BLL.Services
 
             await _unitOfWork.CompleteAsync();
         }
+
+        public async Task<PatientDetailDto?> GetPatientByIdAsync(int id)
+        {
+            var patient = (await _unitOfWork.Repository<Patient>().GetAsync(
+                p => p.Id == id,
+                includeProperties: "Person,Person.User"
+            )).FirstOrDefault();
+
+            if (patient == null) return null;
+
+            var fullName = patient.Person != null 
+                ? $"{patient.Person.FirstName} {patient.Person.LastName}".Trim() 
+                : $"Paciente #{patient.Id}";
+
+            return new PatientDetailDto
+            {
+                Id = patient.Id,
+                FullName = fullName,
+                FirstName = patient.Person?.FirstName ?? "",
+                LastName = patient.Person?.LastName ?? "",
+                Email = patient.Person?.User?.Email,
+                Phone = patient.Person?.PhoneNumber,
+                DateOfBirth = patient.Person?.DateOfBirth,
+                Gender = patient.Person?.Gender,
+                DocumentType = patient.Person?.DocumentType,
+                DocumentNumber = patient.Person?.DocumentNumber,
+                City = patient.Person?.City
+            };
+        }
     }
 }

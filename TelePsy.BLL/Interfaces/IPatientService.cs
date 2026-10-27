@@ -7,5 +7,6 @@ namespace TelePsy.BLL.Interfaces
     {
         Task<PatientProfileDto> GetProfileAsync(string userId);
         Task UpdateProfileAsync(string userId, PatientProfileDto dto);
+        Task<PatientDetailDto?> GetPatientByIdAsync(int id);
     }
 }

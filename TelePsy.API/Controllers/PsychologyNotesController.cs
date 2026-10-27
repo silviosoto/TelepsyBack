@@ -10,7 +10,7 @@ namespace TelePsy.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Psychologist")]
+    [Authorize(Roles = "Psychologist,Admin")]
     public class PsychologyNotesController : ControllerBase
     {
         private readonly IPsychologyNoteService _noteService;
@@ -22,7 +22,7 @@ namespace TelePsy.API.Controllers
             _psychologistService = psychologistService;
         }
 
-        private string GetCurrentUserId()
+        private string? GetCurrentUserId()
         {
             return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
@@ -46,6 +46,54 @@ namespace TelePsy.API.Controllers
             }
         }
 
+        [HttpGet("record/{serviceAttentionRecordId}")]
+        public async Task<IActionResult> GetNotesForRecord(int serviceAttentionRecordId)
+        {
+            try
+            {
+                var notes = await _noteService.GetNotesForAttentionRecordAsync(serviceAttentionRecordId);
+                return Ok(notes);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("appointment/{appointmentId}")]
+        public async Task<IActionResult> GetNoteByAppointment(int appointmentId)
+        {
+            try
+            {
+                var note = await _noteService.GetNoteByAppointmentIdAsync(appointmentId);
+                if (note == null)
+                    return Ok(new { exists = false });
+
+                return Ok(new { exists = true, note });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("detail/{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var note = await _noteService.GetByIdAsync(id);
+                if (note == null)
+                    return NotFound(new { message = "Nota no encontrada" });
+
+                return Ok(note);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateNote([FromBody] PsychologyNote note)
         {
@@ -61,7 +109,7 @@ namespace TelePsy.API.Controllers
 
                 await _noteService.CreateNoteAsync(note);
 
-                return Ok(new { message = "Note created successfully", noteId = note.Id });
+                return Ok(new { message = "Note created successfully", noteId = note.Id, note });
             }
             catch (Exception ex)
             {
@@ -89,7 +137,7 @@ namespace TelePsy.API.Controllers
 
                 await _noteService.UpdateNoteAsync(note);
 
-                return Ok(new { message = "Note updated successfully" });
+                return Ok(new { message = "Note updated successfully", note });
             }
             catch (Exception ex)
             {

@@ -98,28 +98,57 @@ namespace TelePsy.BLL.Services
                     includeProperties: "Patient.Person,Therapy,SessionPackage"
                 );
 
-                var appointmentDtos = appointments.Select(a => new PsychologistAppointmentDto
+                var patientIds = appointments.Select(a => a.PatientId).Distinct().ToList();
+                var patientsWithHistory = (await _unitOfWork.Repository<ClinicalRecord>()
+                    .FindAsync(r => patientIds.Contains(r.PatientId)))
+                    .Select(r => r.PatientId)
+                    .ToHashSet();
+
+                var serviceAttentionRecords = (await _unitOfWork.Repository<ServiceAttentionRecord>()
+                    .FindAsync(r => patientIds.Contains(r.PatientId)))
+                    .ToList();
+
+                var appointmentIds = appointments.Select(a => a.Id).ToList();
+                var evolutionNotes = (await _unitOfWork.Repository<PsychologyNote>()
+                    .FindAsync(n => n.AppointmentId.HasValue && appointmentIds.Contains(n.AppointmentId.Value)))
+                    .ToDictionary(n => n.AppointmentId!.Value, n => n.Id);
+
+                var appointmentDtos = appointments.Select(a =>
                 {
-                    Id = a.Id,
-                    PatientId = a.PatientId,
-                    Patient = a.Patient == null ? null : new PatientSummaryDto
+                    var activeServiceRecord = serviceAttentionRecords
+                        .OrderByDescending(r => r.CreatedAt)
+                        .FirstOrDefault(r => r.PatientId == a.PatientId && r.TherapyId == a.TherapyId);
+
+                    var hasNote = evolutionNotes.TryGetValue(a.Id, out var noteId);
+
+                    return new PsychologistAppointmentDto
                     {
-                        Id = a.Patient.Id,
-                        Person = a.Patient.Person == null ? null : new PersonSummaryDto
+                        Id = a.Id,
+                        PatientId = a.PatientId,
+                        Patient = a.Patient == null ? null : new PatientSummaryDto
                         {
-                            FirstName = a.Patient.Person.FirstName,
-                            LastName = a.Patient.Person.LastName
-                        }
-                    },
-                    TherapyId = a.TherapyId,
-                    TherapyName = a.Therapy?.Name,
-                    ScheduledTime = a.ScheduledTime,
-                    DurationMinutes = a.DurationMinutes,
-                    Status = (int)a.Status,
-                    VideoLink = a.VideoLink,
-                    IsPackage = a.SessionPackageId.HasValue,
-                    SessionPackageId = a.SessionPackageId,
-                    ReasonForConsultation = a.ReasonForConsultation
+                            Id = a.Patient.Id,
+                            Person = a.Patient.Person == null ? null : new PersonSummaryDto
+                            {
+                                FirstName = a.Patient.Person.FirstName,
+                                LastName = a.Patient.Person.LastName
+                            }
+                        },
+                        TherapyId = a.TherapyId,
+                        TherapyName = a.Therapy?.Name,
+                        ScheduledTime = a.ScheduledTime,
+                        DurationMinutes = a.DurationMinutes,
+                        Status = (int)a.Status,
+                        VideoLink = a.VideoLink,
+                        IsPackage = a.SessionPackageId.HasValue,
+                        SessionPackageId = a.SessionPackageId,
+                        ReasonForConsultation = a.ReasonForConsultation,
+                        HasClinicalHistory = patientsWithHistory.Contains(a.PatientId),
+                        HasServiceAttentionRecord = activeServiceRecord != null,
+                        ServiceAttentionRecordId = activeServiceRecord?.Id,
+                        HasEvolutionNote = hasNote,
+                        EvolutionNoteId = hasNote ? noteId : null
+                    };
                 }).ToList();
 
                 System.Console.WriteLine($"[AppointmentService] Retrieved {appointmentDtos.Count} psychologist appointments for psychologistId {psychologistId}");

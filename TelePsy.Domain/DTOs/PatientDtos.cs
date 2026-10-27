@@ -24,4 +24,19 @@ namespace TelePsy.Domain.DTOs
         public string? City { get; set; }
         public string? Hobbies { get; set; }
     }
+
+    public class PatientDetailDto
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Gender { get; set; }
+        public string? DocumentType { get; set; }
+        public string? DocumentNumber { get; set; }
+        public string? City { get; set; }
+    }
 }
